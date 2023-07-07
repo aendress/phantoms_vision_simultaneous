@@ -1,0 +1,657 @@
+---
+title: "Phantom-Words with simultaneous visual presentation - Results"
+author: |
+    | Ansgar D. Endress
+    | City, University of London
+bibliography: /Users/endress/ansgar.bib
+csl: /Users/endress/csl_files/science.csl
+output:
+  pdf_document:
+    citation_package: natbib
+#    includes:
+#      in_header: ansgar.sty
+    toc: FALSE
+    number_sections: true
+    keep_tex: true
+    fig_caption: true
+    highlight: tango    
+  html_notebook:
+    theme: spacelab      
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    fig_caption: true
+    highlight: tango    
+  html_document:
+    theme: spacelab      
+    number_sections: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    fig_caption: true
+    highlight: tango    
+keywords: Keywords
+abstract: Abstract (to be written)
+---
+
+```{r setup, echo = FALSE, include=FALSE}
+rm (list=ls())
+
+options (digits = 3)
+knitr::opts_chunk$set(
+    # Run the chunk
+    eval = TRUE,
+    # Don't include source code
+    echo = FALSE, 
+    # Print warnings to console rather than the output file
+    warning = FALSE,  
+    # Stop on errors
+    error = FALSE,
+    # Print message to console rather than the output file
+    message = FALSE,
+    # Include chunk output into output
+    include = TRUE,
+    # Don't reformat R code
+    tidy = FALSE,
+    # Center images
+    fig.align = 'center',
+    # Default image width
+    out.width = '80%')
+
+# other knits options are here:
+# https://yihui.name/knitr/options/
+```
+
+```{r set-parameters, echo = FALSE, include=FALSE}
+
+source ('helper/vsl_simultaneous_parameters.R')
+
+```
+
+```{r load-libraries, include = FALSE, message = TRUE, warning = TRUE}
+
+if (Sys.info()[["user"]] %in% c("ansgar", "endress")){
+    source ("/Users/endress/R.ansgar/ansgarlib/R/tt.R")
+    source ("/Users/endress/R.ansgar/ansgarlib/R/null.R")
+    #source ("helper_functions.R")
+} else {
+    # Note that these will probably not be the latest versions
+    source("http://endress.org/progs/tt.R")
+    source("http://endress.org/progs/null.R")
+}
+
+
+library (knitr)
+library (kableExtra)
+
+library (ez)
+# library (broom)
+# library(broom.mixed) 
+
+```
+
+
+```{r load-data, message = FALSE, include = FALSE}
+    
+# Age and gender have not been recorded due to experimenter error. 
+
+dplyr::bind_rows(
+    read.testable.results(
+        paste0 (DATA.DIR, "868923_phantoms_fiser_aslin_testable_minds/results"),
+        comment.char = "",
+        n.subj.info.lines = 2,
+        ignore.col.prefixes = IGNORE.COL.PREFIXES,
+        stringsAsFactors = FALSE)  %>% 
+        mutate (population = "testable"),
+    read.testable.results(
+        paste0 (DATA.DIR, "777549_phantoms_fiser_aslin_city/results"),
+        comment.char = "",
+        n.subj.info.lines = 2,
+        ignore.col.prefixes = IGNORE.COL.PREFIXES,
+        stringsAsFactors = FALSE)  %>% 
+        mutate (population = "students")
+) %>% 
+    # these are all rows
+    filter (my.phase == "test.recognition") %>% 
+    mutate (across (c(filename, color.type, config.id, orientation,
+                      test.type, legal, foil, key), 
+                     factor)) -> 
+    dat.vsl.simultaneous.fa
+
+
+dat.vsl.simultaneous.fa %>% 
+    group_by (population, filename, test.type) %>% 
+    summarize (N = n()) %>% 
+    group_by (test.type) %>% 
+    summarize (N = range (N))
+```
+
+
+# Predictions
+The predictions for the current experiment were unclear. On the one hand, it is plausible that observers might encode entire scenes when they are presented simultaneously. If so, they should not accept phantom-words. On the other hand, statistical learning might operate similarly for simultaneous as for sequential presentation. If so, the results with sequential presentations should be replicated, especially because the shapes appear as distinct individual shapes rather than wholes. Further, presenting the shapes   as whole in an object (i.e., in the white on black presentation) might encourage observers to process the combination of shapes as a single hole, leading to the rejection of phantom words.
+
+REMOVED INTERACTION TERM IN GLMM
+
+MAKE SEPARATE TABLES FOR GLMMS
+
+
+
+
+# Analysis 
+## Demographics
+```{r vsl-simultaneous-fa-filter-subj}
+
+dat.vsl.simultaneous.fa %>%
+    filter (test.type == "w.pw") %>% 
+    group_by (population, filename) %>% 
+    summarize (correct = mean (correct)) %>% 
+    filter (correct <= .5) ->
+    dat.vsl.simultaneous.fa.bad.subj
+    #find.bad.subj.by.binom.test2 (filename, incorrect, "greater") ->
+    
+
+
+
+if (REMOVE.BAD.SUBJ) {
+    dplyr::anti_join(
+        dat.vsl.simultaneous.fa,
+        dat.vsl.simultaneous.fa.bad.subj,
+        by = "filename") -> dat.vsl.simultaneous.fa
+    
+}
+
+```
+
+In the current population, about a third of the sample usually needs to be excluded from analysis due to insufficient attention. Unfortunately, the present experiment does not offer a clear performance-based criterion, as participants might genuinely be unable to perform the task. However, as we are mainly interested in the performance on trials involving phantom-words, and rely on the earlier literature to show that participants can learn statistical relations *in principle*, we exclude those participants not exceeding an accuracy of 50% on word vs. part-word trials. This criterion led to the removal of `r dat.vsl.simultaneous.fa.bad.subj %>% group_by (population) %>% summarize (N = n ()) %>% pull (N) %>% knitr::combine_words()` participants from the `r dat.vsl.simultaneous.fa.bad.subj %>% group_by (population) %>% summarize (N = n ()) %>% pull (population) %>% knitr::combine_words()` samples, respectively.
+
+ The demographics of the remaining participants is given in Table \ref{tab:vsl-simultaneous-fa-demographics}; age and gender were not recorded due to experimenter error. 
+
+```{r vsl-simultaneous-fa-average}
+dat.vsl.simultaneous.fa %>% 
+     group_by (population, filename, color.type, test.type) %>% 
+    summarize (
+        correct = 100*mean (correct)) -> dat.vsl.simultaneous.fa.m
+
+```
+
+```{r vsl-simultaneous-fa-demographics}
+bind_rows (
+    dat.vsl.simultaneous.fa %>% 
+        group_by (population, filename, color.type, subjectGroup) %>% 
+        summarize (N = n()) %>% 
+        group_by (population, color.type, subjectGroup) %>% 
+        summarize (N = n()) %>% 
+        mutate (subjectGroup = as.character (subjectGroup)),
+    dat.vsl.simultaneous.fa %>% 
+        group_by (population, filename, color.type) %>% 
+        summarize (N = n()) %>% 
+        group_by (population, color.type) %>% 
+        summarize (N = n()) %>% 
+        mutate (subjectGroup = "TOTAL")
+) %>% 
+    arrange (desc(population), color.type, subjectGroup) %>% 
+    kable.packed (
+        "population",
+        caption = "Demograpics for Experiment 1. Age and gender have not been recorded due to experimenter error",
+           booktabs = TRUE) %>% 
+    kableExtra::kable_classic_2()
+
+```
+
+```{r vsl-simultaneous-fa-widen}
+dat.vsl.simultaneous.fa.m %>% 
+            pivot_wider(
+            id_cols = c(population, filename, color.type),
+            names_from = test.type,
+            values_from = correct,
+            names_prefix = "correct.",
+            names_sep = ".") %>% 
+    mutate (d.absolute.w.pw.ph.pw = 
+                (correct.w.pw - correct.phw.pw),
+            d.absolute.w.pw.w.phw = 
+                (correct.w.pw - correct.w.phw),
+            d.relative.w.pw.ph.pw = 
+                (correct.w.pw - correct.phw.pw) / (correct.w.pw + correct.phw.pw),
+            d.relative.w.pw.w.phw = 
+                (correct.w.pw - correct.w.phw) / (correct.w.pw + correct.w.phw)) ->
+    dat.vsl.simultaneous.fa.m.wide
+
+# Put all difference scores in single row
+dat.vsl.simultaneous.fa.m.wide %>% 
+    pivot_longer (
+        cols = starts_with("d."),
+        names_to = "test.type",
+        values_to = "d") -> dat.vsl.simultaneous.fa.m.wide.single.d.col
+```
+
+## Analysis by accuracy
+
+In the analyses, below we will ask three sets of questions. 
+
+1. Do participants learn? We compare accuracy and difference scores in all cells to their respective baselines. 
+2. Is it harder to discriminate between words and phantom-words than between words and part-words?
+    - Difference score
+    - One-way ANOVA
+3. Is it harder to reject part-words with respect to words compared to phantom-words?
+    - Difference score 
+    - One-way ANOVA
+4. Do any of these effects interact with color.type? 
+
+```{r vsl-simultaneous-fa-descriptives}
+
+bind_rows (
+    dat.vsl.simultaneous.fa.m %>% 
+        group_by(population, color.type, test.type) %>% 
+        summarize(N = n(),
+                  M = mean (correct), 
+                  SE = se (correct),
+                  p.wilcox = wilcox.p(correct, 50)),
+        
+    dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
+        dplyr::select (population, filename, color.type, test.type, d) %>% 
+        group_by(population, color.type, test.type) %>% 
+        summarize(N = n(),
+                  M = mean (d), 
+                  SE = se (d),
+                  p.wilcox = wilcox.p (d, 0))
+) %>% 
+    arrange (color.type, desc (population), desc (test.type)) %>% 
+    unite (population.color.type, population, color.type, sep = " - ") %>% 
+    kable.packed("population.color.type", 
+                 caption = "Descriptives in the naming experiment. *d* represent difference scores.",
+                 col.names = c("", "*N*", "*M*", "*SE*", "*p.wilcoxon*"),
+                 booktabs = TRUE) %>% 
+    kableExtra::kable_classic_2()
+
+```
+
+
+
+```{r vsl-simultaneous-fa-sw}
+
+dat.vsl.simultaneous.fa.m.sw <- 
+    bind_rows (
+        calculate.shapiro.wilk.test.for.cells(
+            dat.vsl.simultaneous.fa.m,
+            c("population",
+                "color.type", 
+              "test.type"),
+            "correct"),
+        calculate.shapiro.wilk.test.for.cells(
+            dat.vsl.simultaneous.fa.m.wide %>% 
+                pivot_longer (
+                    cols = starts_with("d."),
+                    names_to = "test.type",
+                    values_to = "d"),
+            c("population",
+                "color.type",
+              "test.type"),
+            "d")
+        )  %>% 
+    arrange (color.type, desc (population), desc (test.type))
+
+dat.vsl.simultaneous.fa.m.sw %>% 
+    unite (population.color.type, population, color.type, sep = " - ") %>% 
+    kable.packed("population.color.type", 
+                 caption = "Shapiro-Wilk test results for the different cells.", 
+           booktabs = TRUE, escape = FALSE) %>% 
+    kableExtra::kable_classic_2()
+
+```
+
+```{r vsl-simultaneous-fa-plot-accuracy, fig="Average accuracy for the different trial types"}
+
+dat.vsl.simultaneous.fa.m %>% 
+    mutate (test.type = factor (test.type, 
+                                levels = c("w.pw", "phw.pw", "w.phw"))) %>% 
+    mutate (population = factor (population, levels = rev (levels2 (population)))) %>% 
+    ggplot(aes (x = test.type, y = correct)) +
+    theme_linedraw(14) + 
+    geom_violin (alpha = .5, 
+                 fill = "#5588CC", 
+                 col="#5588CC") +
+    scale_x_discrete("Test type",
+                     labels = c("Word vs. part-word", 
+                                "Phantom-word vs .part-word", 
+                                "Word vs. Phantom-Word") %>% 
+                         str_wrap(width = 15)) +
+    theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
+    scale_y_continuous("% Correct") + 
+    geom_dotplot(
+        #aes (color = sex, fill = sex),
+        binaxis= "y",
+               stackdir = "center",
+               dotsize = 0.5) +
+    stat_summary(fun.data=mean_sdl, 
+                 fun.args = list (mult=1), 
+                 geom="pointrange", color="#cc556f") + 
+    #geom_boxplot() +
+    facet_grid (population ~ color.type,
+               labeller = labeller (color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
+                                        str_to_sentence)) -> p.vsl.simultaneous.fa.accuracy
+
+
+p.vsl.simultaneous.fa.accuracy
+
+ggsave(paste0 (FIG.DIR, "p.vsl.simultaneous.fa.acc.pdf"),
+       device = "pdf")
+
+```
+
+
+
+```{r vsl-simultaneous-fa-aov}
+nested.one.way.anova.by.test.type  %<a-% {
+    . %>%
+        group_by (population) %>% 
+        nest () %>% 
+        mutate (aov = map (data, 
+                           function (data) ezANOVA (data = data,
+                                                    dv = .(correct),
+                                                    wid = .(filename),
+                                                    #between = .(color.type),
+                                                    within = .(test.type),
+                                                    detailed = TRUE,
+                                                    type = 3)
+        )) %>% 
+        dplyr::select(-data) %>% 
+        unnest %>% 
+        # unnest the AOV data frame 
+        unnest 
+}
+
+
+nested.two.way.anova.by.color.and.test.type  %<a-% {
+    . %>%
+        group_by (population) %>% 
+        nest () %>% 
+        mutate (aov = map (data, 
+                           function (data) ezANOVA (data = data,
+                                                    dv = .(correct),
+                                                    wid = .(filename),
+                                                    between = .(color.type),
+                                                    within = .(test.type),
+                                                    detailed = TRUE,
+                                                    type = 3)
+        )) %>% 
+        dplyr::select(-data) %>% 
+        unnest %>% 
+        # unnest the AOV data frame 
+        unnest 
+}
+
+
+# Black on white
+## Black on white: Word vs. part-word vs. phantom-word vs. part-word
+dat.vsl.simultaneous.fa.m %>% 
+    filter (color.type == "black.on.white",
+            test.type != "w.phw")  %>% 
+    nested.one.way.anova.by.test.type -> dat.aov.vsl.simultaneous.fa.correct.black.on.white.w.pw.phw.pw
+
+## Black on white: Word vs. part-word vs. word vs. phantom-word
+dat.vsl.simultaneous.fa.m %>% 
+    filter (color.type == "black.on.white",
+            test.type != "phw.pw") %>% 
+    nested.one.way.anova.by.test.type -> dat.aov.vsl.simultaneous.fa.correct.black.on.white.w.pw.w.phw
+
+
+# White on black
+## White on black: Word vs. part-word vs. phantom-word vs. part-word
+dat.vsl.simultaneous.fa.m %>% 
+    filter (color.type != "black.on.white",
+            test.type != "w.phw") %>% 
+    nested.one.way.anova.by.test.type -> dat.aov.vsl.simultaneous.fa.correct.white.on.black.w.pw.phw.pw
+
+## White on black: Word vs. part-word vs. word vs. phantom-word
+dat.vsl.simultaneous.fa.m %>% 
+        filter (color.type != "black.on.white",
+                test.type != "phw.pw") %>% 
+    nested.one.way.anova.by.test.type -> dat.aov.vsl.simultaneous.fa.correct.white.on.black.w.pw.w.phw
+
+
+# Both colors
+## Both colors: Word vs. part-word vs. phantom-word vs. part-word
+dat.vsl.simultaneous.fa.m %>% 
+    filter (#color.type != "black.on.white",
+        test.type != "w.phw") %>% 
+    nested.two.way.anova.by.color.and.test.type -> dat.aov.vsl.simultaneous.fa.correct.all.w.pw.phw.pw
+
+## Both colors: Word vs. part-word vs. word vs. phantom-word
+dat.vsl.simultaneous.fa.m %>% 
+    filter (#color.type != "black.on.white",
+        test.type != "phw.pw") %>% 
+    nested.two.way.anova.by.color.and.test.type -> dat.aov.vsl.simultaneous.fa.correct.all.w.pw.w.phw
+
+
+
+
+# Not needed for 2 levels
+#extract.sphericity.from.ezANOVA(aov.vsl.simultaneous.fa.correct)
+
+
+bind_rows(
+    dat.aov.vsl.simultaneous.fa.correct.black.on.white.w.pw.phw.pw %>% 
+        mutate (color.type = "Black on white",
+                contrast = "Word vs. Part-Words vs. Phantom-Words vs. Part-Words"),
+    
+    dat.aov.vsl.simultaneous.fa.correct.black.on.white.w.pw.w.phw %>% 
+        mutate (color.type = "Black on white",
+                contrast = "Word vs. Part-Words vs. Words vs. Phantom-Words"),
+    
+    dat.aov.vsl.simultaneous.fa.correct.white.on.black.w.pw.phw.pw %>% 
+        mutate (color.type = "White on black",
+                contrast = "Word vs. Part-Words vs. Phantom-Words vs. Part-Words"),
+    
+    dat.aov.vsl.simultaneous.fa.correct.white.on.black.w.pw.w.phw %>% 
+        mutate (color.type = "White on black",
+                contrast = "Word vs. Part-Words vs. Words vs. Phantom-Words"),
+    
+    dat.aov.vsl.simultaneous.fa.correct.all.w.pw.phw.pw %>% 
+        mutate (color.type = "Both",
+                contrast = "Word vs. Part-Words vs. Phantom-Words vs. Part-Words"),
+    
+    dat.aov.vsl.simultaneous.fa.correct.all.w.pw.w.phw %>% 
+        mutate (color.type = "Both",
+                contrast = "Word vs. Part-Words vs. Words vs. Phantom-Words")
+) %>% 
+    filter (!str_detect (Effect, "Intercept")) %>% 
+    unite (pack.col, population, color.type, contrast, sep = " - ") %>% 
+    kable.packed ("pack.col",
+        caption = "ANOVA for accuracy scores in the naming experiment",
+           booktabs = TRUE) %>%
+    kableExtra::kable_styling(latex_options =
+                                  c("scale_down",
+                                  "hold_position")) %>% 
+                                  #"striped")) %>% 
+    kableExtra::kable_classic_2()
+
+
+    
+
+
+
+```
+
+
+```{r vsl-simultaneous-fa-plot-glmer-correct-calculate}
+nested.one.way.glmer.by.test.type  %<a-% {
+    . %>%
+        group_by (population) %>% 
+        nest () %>% 
+        mutate (glmer = map (data, 
+                           function (data) glmer(correct ~ test.type + 
+                                                     (1|filename), 
+                                                 control=glmerControl(optimizer="bobyqa"),
+                                                 family="binomial",
+                                                 data = data)
+        )) %>% 
+        dplyr::select(-data)  %>% 
+        mutate (glmer = map (glmer, 
+                             function (model) {
+                                 model %>% 
+                                     # extract.results.from.model %>% 
+                                     # process.glmm.table
+                                     extract.results.from.binary.model
+                             }
+        )) %>% 
+        unnest  
+}
+
+
+nested.two.way.glmer.by.color.and.test.type  %<a-% {
+    . %>%
+        group_by (population) %>% 
+        nest () %>% 
+        mutate (glmer = map (data, 
+                           function (data) glmer(correct ~ test.type * color.type + 
+                                                     (1|filename), 
+                                                 control=glmerControl(optimizer="bobyqa"),
+                                                 family="binomial",
+                                                 data = data)
+        )) %>% 
+        dplyr::select(-data)  %>% 
+        mutate (glmer = map (glmer, 
+                             function (model) {
+                                 model %>% 
+                                     # extract.results.from.model %>% 
+                                     # process.glmm.table
+                                     extract.results.from.binary.model
+                             }
+        )) %>% 
+        unnest  
+}
+
+
+
+# Black on white
+## Black on white: Word vs. part-word vs. phantom-word vs. part-word
+lmer.vsl.simultaneous.fa.black.on.white.w.pw.phw.pw <- 
+    dat.vsl.simultaneous.fa %>% 
+    filter (color.type == "black.on.white",
+            test.type != "w.phw") %>% 
+    nested.one.way.glmer.by.test.type 
+
+## Black on white: Word vs. part-word vs. word vs. phantom-word
+lmer.vsl.simultaneous.fa.black.on.white.w.pw.w.phw <- 
+    dat.vsl.simultaneous.fa %>% 
+    filter (color.type == "black.on.white",
+            test.type != "phw.pw") %>% 
+    nested.one.way.glmer.by.test.type
+
+# White on black
+## White on black: Word vs. part-word vs. phantom-word vs. part-word
+lmer.vsl.simultaneous.fa.white.on.black.w.pw.phw.pw <- 
+    dat.vsl.simultaneous.fa %>% 
+    filter (color.type != "black.on.white",
+            test.type != "w.phw") %>% 
+    nested.one.way.glmer.by.test.type 
+
+## White on black: Word vs. part-word vs. word vs. phantom-word
+lmer.vsl.simultaneous.fa.white.on.black.w.pw.w.phw <- 
+    dat.vsl.simultaneous.fa %>% 
+    filter (color.type != "black.on.white",
+            test.type != "phw.pw") %>% 
+    nested.one.way.glmer.by.test.type 
+
+# Both colors
+## Both colors: Word vs. part-word vs. phantom-word vs. part-word
+lmer.vsl.simultaneous.fa.all.w.pw.phw.pw <- 
+    dat.vsl.simultaneous.fa %>% 
+    filter (#color.type != "black.on.white",
+        test.type != "w.phw") %>% 
+    nested.two.way.glmer.by.color.and.test.type
+
+## Both colors: Word vs. part-word vs. word vs. phantom-word
+lmer.vsl.simultaneous.fa.all.w.pw.w.phw <- 
+    dat.vsl.simultaneous.fa %>% 
+    filter (#color.type != "black.on.white",
+        test.type != "phw.pw") %>% 
+    nested.two.way.glmer.by.color.and.test.type
+
+
+bind_rows(
+    lmer.vsl.simultaneous.fa.black.on.white.w.pw.phw.pw %>% 
+        mutate (color.type = "Black on white",
+                contrast = "Word vs. Part-Words vs. Phantom-Words vs. Part-Words"),
+    
+    lmer.vsl.simultaneous.fa.black.on.white.w.pw.w.phw %>% 
+        mutate (color.type = "Black on white",
+                contrast = "Word vs. Part-Words vs. Words vs. Phantom-Words"),
+    
+    lmer.vsl.simultaneous.fa.white.on.black.w.pw.phw.pw %>% 
+        mutate (color.type = "White on black",
+                contrast = "Word vs. Part-Words vs. Phantom-Words vs. Part-Words"),
+    
+    lmer.vsl.simultaneous.fa.white.on.black.w.pw.w.phw %>% 
+        mutate (color.type = "White on black",
+                contrast = "Word vs. Part-Words vs. Words vs. Phantom-Words"),
+    
+    lmer.vsl.simultaneous.fa.all.w.pw.phw.pw %>% 
+        mutate (color.type = "Both",
+                contrast = "Word vs. Part-Words vs. Phantom-Words vs. Part-Words"),
+    
+    lmer.vsl.simultaneous.fa.all.w.pw.w.phw %>% 
+        #broom.mixed::tidy (lmer.vsl.simultaneous.fa.black.on.white.w.pw.phw.pw, conf.int=TRUE,exponentiate=TRUE,effects="fixed") %>% 
+        mutate (color.type = "Both",
+                contrast = "Word vs. Part-Words vs. Words vs. Phantom-Words")
+) %>% 
+    dplyr::select (-c("t_log", "p_log")) %>% 
+    #filter (p <= .1)  %>% 
+    filter (!str_detect (term, "Intercept")) %>% 
+    unite (pack.col, population, color.type, contrast, sep = " - ") %>% 
+    kable.packed ("pack.col",
+                  caption = "Binary mixed model results",
+                  col.names = str_remove(names (.)[-1], "_.*$"), 
+                  booktabs = TRUE) %>% 
+    kableExtra::add_header_above(c(" " = 1, "Log-odds" = 3, "Odd ratios" = 3, " " = 2)) %>% 
+    kableExtra::kable_styling(latex_options =
+                                  c("scale_down",
+                                  "hold_position")) %>% 
+                                  #"striped")) %>% 
+    kable_classic_2()
+
+```
+
+
+
+
+### Acurracy by difference scores
+
+```{r vsl-simultaneous-fa-plot-difference-scores, fig="Average difference for the different trial types"}
+
+dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
+    filter (str_detect(test.type, "relative")) %>% 
+    ggplot(aes (x = test.type, y = d)) +
+    theme_linedraw(14) + 
+    geom_violin (alpha = .5, 
+                 fill = "#5588CC", 
+                 col="#5588CC") +
+    scale_x_discrete("Test type",
+                     labels = ~ str_remove(.x,
+                                           "^d\\..*?\\.") %>% 
+                         str_wrap(width = 15)) +
+    theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
+    scale_y_continuous("% Correct") + 
+    geom_dotplot(
+        #aes (color = sex, fill = sex),
+        binaxis= "y",
+               stackdir = "center",
+               dotsize = 0.5) +
+    stat_summary(fun.data=mean_sdl, 
+                 fun.args = list (mult=1), 
+                 geom="pointrange", color="#cc556f") + 
+    #geom_boxplot() +
+    facet_grid (population ~ color.type,
+               labeller = labeller (color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
+                                        str_to_sentence)) -> p.vsl.simultaneous.fa.diff.scores
+
+
+p.vsl.simultaneous.fa.diff.scores
+
+ggsave(paste0 (FIG.DIR, "p.vsl.simultaneous.fa.diff.pdf"),
+       device = "pdf")
+
+```
+
+
+
