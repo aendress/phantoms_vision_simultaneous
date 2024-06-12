@@ -23,3 +23,5 @@ Results. Please note that the color polarity labels are switched the result file
 
 Visual shapes used in the experiment.
 
+### Samples
+Sample scenes
