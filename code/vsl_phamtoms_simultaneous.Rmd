@@ -400,8 +400,46 @@ map2 (
 
 ```
 
+```{r print-words-for-paper, eval = FALSE}
+
+
+rbind(    
+    purrr::map(l.words[[1]],
+        ~ data.frame(phantom = paste0(.x$phantom, collapse = ""), 
+                     word = paste0(.x$actual, collapse = ""))) %>% 
+        purrr::list_rbind(),
+    purrr::map(l.words[[2]],
+        ~ data.frame(phantom = paste0(.x$phantom, collapse = ""), 
+                     word = paste0(.x$actual, collapse = ""))) %>% 
+        purrr::list_rbind()) %>% 
+    dplyr::group_by(phantom) %>% 
+    dplyr::mutate(word.id = str_c("word", dplyr::row_number())) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::mutate(phantom = str_c("Phantom-word: ", phantom)) %>% 
+    tidyr::pivot_wider(id_cols = "phantom",
+                       names_from = "word.id",
+                       values_from = "word") %>% 
+    kable.packed(
+        "phantom",
+        caption = "Design of the words and phantom.words",
+        col.names = rep("", 3),
+        booktabs = TRUE,
+        longtable = FALSE,
+        escape = FALSE,
+        format = "latex") %>% 
+    kableExtra::kable_styling(latex_options = c("striped",
+        "scale_down",
+        "hold_position",
+        "repeat_header")) %>%
+    kableExtra::kable_classic_2()
+    
+                
+      
+      
+    
+```
 ## Familiarization 
-We then created familiarization scenes according to the four configurations shown in the Figure below. Each scene comprised two words generated from different phantom-words. With 6 words per set, 4 different configurations, and 2 "orders" of the words in the scenes, we obtain $6 \times 6 \times 4 \times 2 = 288$ scenes.
+We then created familiarization scenes according to the four configurations shown in the Figure below. Each scene comprised two words. These words came from different sets (i.e., they shared shapes with different phantom-words). As we used all combinations of the six words in each set, with each of the four configurations, and with each word appearing on each of the two (left or right) side of the configurations in the figure below, we obtain $6 \times 6 \times 4 \times 2 = 288$ scenes. As a result, each word appeared 48 times in total, and 24 times in each (horizontal or vertical) orientation.
 
 ![The basic configurations](../figs/configurations.png)
 
@@ -419,9 +457,9 @@ Compared to the horizontal orientation, vertical shape combinations were rotated
 
 
 # We first define the familiarization configurations
-list (
-    list (
-        fam = data.frame (
+list(
+    list(
+        fam = data.frame(
             config.id = 1,
             x = COORD.ORIGIN["x"] + COORD.STEP["x"] * c(0, 0, 0, 0, 1, 2),
             y = COORD.ORIGIN["y"] + COORD.STEP["y"] * c(0, 1, 2, 3, 3, 3)
@@ -583,7 +621,7 @@ bind_rows(
                 word2 = l.words[[1]],
                 configuration =  get.from.list(l.configurations, "fam"))
 ) %>% 
-    pmap (~ data.frame (
+    pmap(~ data.frame (
         stim = c(..1$actual, ..2$actual),
         config.id = ..3$config.id,
         x = ..3$x,
@@ -596,7 +634,7 @@ bind_rows(
 ### Word vs. Part-Word test
 As shown in the Figure above, each configuration admits exactly one part-word. For example, in Configuration 1, the only part-word without a bend uses the two top-most symbols from the vertical word and the left-most symbol from the horizontal word. 
 
-We randomly selected 12 combinations of words of the two sets, which each word appearing equally often as the first or second word. We randomly paired these combinations with a configuration and generated the corresponding words and part-words. Each configuration was used equally often. As a result, each word occurred twice, and each part-word once. 
+We randomly selected 12 combinations of words to create the test trials. One word in each combination came from either set. Each word appeared equally often either as the left or as the right item in the configurations. We randomly paired these combinations with a configuration and generated the corresponding words and part-words. Each configuration was used equally often. As a result, each word occurred twice, and each part-word once. 
 
 Words and part-words were presented centered on the screen rather than in their original positions. The test items were presented one after the other. The order was randomly chosen; an equal number of trials started with words and part-words, respectively.
 

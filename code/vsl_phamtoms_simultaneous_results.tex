@@ -5,16 +5,19 @@
 \documentclass[
 ]{article}
 \usepackage{amsmath,amssymb}
-\usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
 \else % if luatex or xetex
-  \usepackage{unicode-math}
+  \usepackage{unicode-math} % this also loads fontspec
   \defaultfontfeatures{Scale=MatchLowercase}
   \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -70,9 +73,9 @@
 \fi
 \usepackage[]{natbib}
 \bibliographystyle{plainnat}
-\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\urlstyle{same} % disable monospaced font for URLs
+\urlstyle{same}
 \hypersetup{
   pdftitle={Phantom-Words with simultaneous visual presentation - Results},
   pdfkeywords={Keywords},
@@ -90,8 +93,7 @@ City, University of London}
 Abstract (to be written)
 \end{abstract}
 
-\hypertarget{predictions}{%
-\section{Predictions}\label{predictions}}
+\section{Predictions}\label{predictions}
 
 The predictions for the current experiment were unclear. On the one
 hand, it is plausible that observers might encode entire scenes when
@@ -109,22 +111,45 @@ REMOVED INTERACTION TERM IN GLMM
 
 MAKE SEPARATE TABLES FOR GLMMS
 
-\hypertarget{analysis}{%
-\section{Analysis}\label{analysis}}
+\section{Analysis}\label{analysis}
 
-\hypertarget{demographics}{%
-\subsection{Demographics}\label{demographics}}
+\subsection{Demographics}\label{demographics}
 
-In the current population, about a third of the sample usually needs to
-be excluded from analysis due to insufficient attention. Unfortunately,
-the present experiment does not offer a clear performance-based
-criterion, as participants might genuinely be unable to perform the
-task. However, as we are mainly interested in the performance on trials
-involving phantom-words, and rely on the earlier literature to show that
-participants can learn statistical relations \emph{in principle}, we
-exclude those participants not exceeding an accuracy of 50\% on word
-vs.~part-word trials. This criterion led to the removal of 23 and 53
-participants from the students and testable samples, respectively.
+The main experiment recruited participants from testable minds
+(\url{https://minds.testable.org/}). I pilot experiment recruited
+participants from first year students at City, University of London
+(UK). In the latter population, other experiments typically need to
+exclude 30\% to 50\% of the sample due to insufficient attention.
+Unfortunately, the present experiment does not offer a clear
+performance-based criterion to make sure that participants paid
+attention to the stimuli, as the task might be genuinely difficult.
+However, given that our main interest lies in the performance on trials
+involving phantom-words for participants who succeeded in the
+statistical learning task, it is more conservative to exclude
+participants whom might not have paid attention to the task, even if
+this overestimates the statistical learning abilities.
+
+As a result, I rely on the assumption that earlier statistical learning
+literature has shown that participants can learn statistical relations
+\emph{in principle}, and exclude those participants not exceeding an
+accuracy of 50\% on word vs.~part-word trials. This criterion led to the
+removal of 23 and 53 participants from the students and testable
+samples, respectively.
+
+The pattern of significance was very similar when all participants were
+excluded, with the following differences. First, for the testable minds
+sample, performance on the words vs.~part-words trials was no longer
+greater than on the phantom-words vs part-words trials, both when shapes
+were presented in black on a white background and when the polarity was
+inverted. Given that earlier, sequential experiments involving
+phantom-words showed equivalent performance for both trial types,
+excluding participants is thus more conservative for the current
+purposes. Second, for the student sample, the performance difference
+between these trial types also ceased to be significant when all
+participants are included. Further, when items were presented as black
+shapes on white background, there was no significant preference for
+words over part-words, suggesting that some of these participants did
+not pay attention to the experiment.
 
 The demographics of the remaining participants is given in Table
 \ref{tab:vsl-simultaneous-fa-demographics}; age and gender were not
@@ -132,254 +157,148 @@ recorded due to experimenter error.
 
 \begin{table}
 
-\caption{\label{tab:vsl-simultaneous-fa-demographics}Demograpics for Experiment 1. Age and gender have not been recorded due to experimenter error}
+\caption{\label{tab:vsl-simultaneous-fa-demographics}Demographics of the final sample, after excluding participants whose accuracy on word vs. part-words trials was below 50 percent. For the student population, age and gender have not been recorded due to experimenter error.}
 \centering
-\begin{tabular}[t]{llr}
+\begin{tabular}[t]{llrrrrrl}
 \toprule
-color.type & subjectGroup & N\\
+Population & Color polarity & N & Females & Males & Other & Age & Age range\\
 \midrule
-\addlinespace[0.3em]
-\multicolumn{3}{l}{\textbf{testable}}\\
-\hspace{1em}black.on.white & 11 & 7\\
-\hspace{1em}black.on.white & 12 & 4\\
-\hspace{1em}black.on.white & 13 & 7\\
-\hspace{1em}black.on.white & 14 & 7\\
-\hspace{1em}black.on.white & 15 & 5\\
-\hspace{1em}black.on.white & 16 & \vphantom{1} 2\\
-\hspace{1em}black.on.white & 17 & 7\\
-\hspace{1em}black.on.white & 18 & 5\\
-\hspace{1em}black.on.white & 19 & 3\\
-\hspace{1em}black.on.white & 20 & 4\\
-\hspace{1em}black.on.white & TOTAL & 51\\
-\hspace{1em}white.on.black & 1 & 3\\
-\hspace{1em}white.on.black & 10 & 5\\
-\hspace{1em}white.on.black & 2 & 7\\
-\hspace{1em}white.on.black & 3 & 6\\
-\hspace{1em}white.on.black & 4 & 6\\
-\hspace{1em}white.on.black & 5 & 3\\
-\hspace{1em}white.on.black & 6 & 6\\
-\hspace{1em}white.on.black & 7 & 5\\
-\hspace{1em}white.on.black & 8 & 7\\
-\hspace{1em}white.on.black & 9 & 9\\
-\hspace{1em}white.on.black & TOTAL & 57\\
-\addlinespace[0.3em]
-\multicolumn{3}{l}{\textbf{students}}\\
-\hspace{1em}black.on.white & 11 & 2\\
-\hspace{1em}black.on.white & 12 & 3\\
-\hspace{1em}black.on.white & 13 & 2\\
-\hspace{1em}black.on.white & 14 & 2\\
-\hspace{1em}black.on.white & 15 & 1\\
-\hspace{1em}black.on.white & 16 & 2\\
-\hspace{1em}black.on.white & 19 & 2\\
-\hspace{1em}black.on.white & 20 & 1\\
-\hspace{1em}black.on.white & TOTAL & 15\\
-\hspace{1em}white.on.black & 10 & 1\\
-\hspace{1em}white.on.black & 2 & 1\\
-\hspace{1em}white.on.black & 3 & 3\\
-\hspace{1em}white.on.black & 5 & 2\\
-\hspace{1em}white.on.black & 7 & 2\\
-\hspace{1em}white.on.black & 8 & 1\\
-\hspace{1em}white.on.black & 9 & 2\\
-\hspace{1em}white.on.black & TOTAL & 12\\
+testable & black on white & 57 & 32 & 25 & 0 & 30.7 & 19-59\\
+testable & white on black & 51 & 22 & 29 & 0 & 31.9 & 18-57\\
+students & black on white & 12 & 0 & 0 & 12 &  & Inf--Inf\\
+students & white on black & 15 & 0 & 0 & 15 &  & Inf--Inf\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\hypertarget{analysis-by-accuracy}{%
-\subsection{Analysis by accuracy}\label{analysis-by-accuracy}}
+\subsection{Analysis by accuracy}\label{analysis-by-accuracy}
 
-In the analyses, below we will ask three sets of questions.
+We will analyze the results using two types of analyses. First, I
+compare the performance in the different trial types to the chance level
+of 50\% using Wilcoxon test. To compare performance across trial types,
+I calculate normalized difference scores, that is,
+\(\frac{\text{accuracy}_{\text{trial type 1}} - \text{accuracy}_{\text{trial type 2}}}{\text{accuracy}_{\text{trial type 1}} + \text{accuracy}_{\text{trial type 2}}}\).
+These difference scores are the compared to the chance level of zero,
+again using Wilcoxon tests. I also ask whether any of these results is
+affected by the color polarity type (i.e., black on white vs.~white on
+black).
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  Do participants learn? We compare accuracy and difference scores in
-  all cells to their respective baselines.
-\item
-  Is it harder to discriminate between words and phantom-words than
-  between words and part-words?
-
-  \begin{itemize}
-  \tightlist
-  \item
-    Difference score
-  \item
-    One-way ANOVA
-  \end{itemize}
-\item
-  Is it harder to reject part-words with respect to words compared to
-  phantom-words?
-
-  \begin{itemize}
-  \tightlist
-  \item
-    Difference score
-  \item
-    One-way ANOVA
-  \end{itemize}
-\item
-  Do any of these effects interact with color.type?
-\end{enumerate}
+Second, we will confirm these results using a set of generalized linear
+models.
 
 \begin{table}
 
-\caption{\label{tab:vsl-simultaneous-fa-descriptives}Descriptives in the naming experiment. *d* represent difference scores.}
+\caption{\label{tab:vsl-simultaneous-fa-descriptives}Descriptives of accuracy scores and difference scores, after exclusion of participants whose performance was below 50 percent on word vs. part-word trials. The p value reflects a Wilcoxon test against the chance levels of 50 percent and of 0 for accuracies and difference scores, respectively. The effect of color polarity represents a Wilcoxon test comparing all of these dependent variables as a function of color polarity}
 \centering
-\begin{tabular}[t]{lrrrr}
+\begin{tabular}[t]{lrrr}
 \toprule
- & *N* & *M* & *SE* & *p.wilcoxon*\\
+test.type & M & SE & p.wilcox\\
 \midrule
 \addlinespace[0.3em]
-\multicolumn{5}{l}{\textbf{testable - black.on.white}}\\
-\hspace{1em}w.pw & 51 & 69.118 & 1.496 & 0.000\\
-\hspace{1em}w.phw & 51 & 49.346 & 2.012 & 0.985\\
-\hspace{1em}phw.pw & 51 & 63.562 & 2.516 & 0.000\\
-\hspace{1em}d.relative.w.pw.w.phw & 51 & 0.178 & 0.021 & 0.000\\
-\hspace{1em}d.relative.w.pw.ph.pw & 51 & 0.056 & 0.021 & 0.026\\
-\hspace{1em}d.absolute.w.pw.w.phw & 51 & 19.771 & 2.309 & 0.000\\
-\hspace{1em}d.absolute.w.pw.ph.pw & 51 & 5.556 & 2.568 & 0.037\\
+\multicolumn{4}{l}{\textbf{testable - black.on.white (N = 57)}}\\
+\hspace{1em}w.pw & 69.152 & 1.395 & 0.000\\
+\hspace{1em}w.phw & 49.269 & 2.065 & 0.905\\
+\hspace{1em}phw.pw & 58.626 & 1.985 & 0.000\\
+\hspace{1em}d.relative.w.pw.w.phw & 0.182 & 0.021 & 0.000\\
+\hspace{1em}d.relative.w.pw.ph.pw & 0.091 & 0.021 & 0.000\\
 \addlinespace[0.3em]
-\multicolumn{5}{l}{\textbf{students - black.on.white}}\\
-\hspace{1em}w.pw & 15 & 66.667 & 2.381 & 0.001\\
-\hspace{1em}w.phw & 15 & 50.556 & 5.355 & 0.875\\
-\hspace{1em}phw.pw & 15 & 60.556 & 1.968 & 0.002\\
-\hspace{1em}d.relative.w.pw.w.phw & 15 & 0.165 & 0.058 & 0.018\\
-\hspace{1em}d.relative.w.pw.ph.pw & 15 & 0.047 & 0.029 & 0.143\\
-\hspace{1em}d.absolute.w.pw.w.phw & 15 & 16.111 & 5.980 & 0.018\\
-\hspace{1em}d.absolute.w.pw.ph.pw & 15 & 6.111 & 3.714 & 0.111\\
+\multicolumn{4}{l}{\textbf{testable - white.on.black (N = 51)}}\\
+\hspace{1em}w.pw & 69.118 & 1.496 & 0.000\\
+\hspace{1em}w.phw & 49.346 & 2.012 & 0.985\\
+\hspace{1em}phw.pw & 63.562 & 2.516 & 0.000\\
+\hspace{1em}d.relative.w.pw.w.phw & 0.178 & 0.021 & 0.000\\
+\hspace{1em}d.relative.w.pw.ph.pw & 0.056 & 0.021 & 0.026\\
 \addlinespace[0.3em]
-\multicolumn{5}{l}{\textbf{testable - white.on.black}}\\
-\hspace{1em}w.pw & 57 & 69.152 & 1.395 & 0.000\\
-\hspace{1em}w.phw & 57 & 49.269 & 2.065 & 0.905\\
-\hspace{1em}phw.pw & 57 & 58.626 & 1.985 & 0.000\\
-\hspace{1em}d.relative.w.pw.w.phw & 57 & 0.182 & 0.021 & 0.000\\
-\hspace{1em}d.relative.w.pw.ph.pw & 57 & 0.091 & 0.021 & 0.000\\
-\hspace{1em}d.absolute.w.pw.w.phw & 57 & 19.883 & 2.332 & 0.000\\
-\hspace{1em}d.absolute.w.pw.ph.pw & 57 & 10.526 & 2.521 & 0.001\\
+\multicolumn{4}{l}{\textbf{testable - zEffect of color polarity}}\\
+\hspace{1em}w.pw &  &  & 0.959\\
+\hspace{1em}w.phw &  &  & 0.878\\
+\hspace{1em}phw.pw &  &  & 0.125\\
+\hspace{1em}d.relative.w.pw.w.phw &  &  & 0.784\\
+\hspace{1em}d.relative.w.pw.ph.pw &  &  & 0.331\\
 \addlinespace[0.3em]
-\multicolumn{5}{l}{\textbf{students - white.on.black}}\\
-\hspace{1em}w.pw & 12 & 67.361 & 2.262 & 0.002\\
-\hspace{1em}w.phw & 12 & 52.778 & 5.392 & 0.623\\
-\hspace{1em}phw.pw & 12 & 47.917 & 4.167 & 0.765\\
-\hspace{1em}d.relative.w.pw.w.phw & 12 & 0.141 & 0.051 & 0.019\\
-\hspace{1em}d.relative.w.pw.ph.pw & 12 & 0.180 & 0.045 & 0.004\\
-\hspace{1em}d.absolute.w.pw.w.phw & 12 & 14.583 & 5.580 & 0.041\\
-\hspace{1em}d.absolute.w.pw.ph.pw & 12 & 19.444 & 4.831 & 0.006\\
+\multicolumn{4}{l}{\textbf{students - black.on.white (N = 12)}}\\
+\hspace{1em}w.pw & 67.361 & 2.262 & 0.002\\
+\hspace{1em}w.phw & 52.778 & 5.392 & 0.623\\
+\hspace{1em}phw.pw & 47.917 & 4.167 & 0.765\\
+\hspace{1em}d.relative.w.pw.w.phw & 0.141 & 0.051 & 0.019\\
+\hspace{1em}d.relative.w.pw.ph.pw & 0.180 & 0.045 & 0.004\\
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{students - white.on.black (N = 15)}}\\
+\hspace{1em}w.pw & 66.667 & 2.381 & 0.001\\
+\hspace{1em}w.phw & 50.556 & 5.355 & 0.875\\
+\hspace{1em}phw.pw & 60.556 & 1.968 & 0.002\\
+\hspace{1em}d.relative.w.pw.w.phw & 0.165 & 0.058 & 0.018\\
+\hspace{1em}d.relative.w.pw.ph.pw & 0.047 & 0.029 & 0.143\\
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{students - zEffect of color polarity}}\\
+\hspace{1em}w.pw &  &  & 0.698\\
+\hspace{1em}w.phw &  &  & 0.825\\
+\hspace{1em}phw.pw &  &  & 0.008\\
+\hspace{1em}d.relative.w.pw.w.phw &  &  & 0.807\\
+\hspace{1em}d.relative.w.pw.ph.pw &  &  & 0.011\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}
+\begin{figure}
 
-\caption{\label{tab:vsl-simultaneous-fa-sw}Shapiro-Wilk test results for the different cells.}
-\centering
-\begin{tabular}[t]{lrrl}
-\toprule
-test.type & W & p.value & p<=.05\\
-\midrule
-\addlinespace[0.3em]
-\multicolumn{4}{l}{\textbf{testable - black.on.white}}\\
-\hspace{1em}w.pw & 0.855 & 0.000 & ***\\
-\hspace{1em}w.phw & 0.946 & 0.021 & *\\
-\hspace{1em}phw.pw & 0.971 & 0.251 & \\
-\hspace{1em}d.relative.w.pw.w.phw & 0.979 & 0.512 & \\
-\hspace{1em}d.relative.w.pw.ph.pw & 0.965 & 0.135 & \\
-\hspace{1em}d.absolute.w.pw.w.phw & 0.967 & 0.168 & \\
-\hspace{1em}d.absolute.w.pw.ph.pw & 0.967 & 0.159 & \\
-\addlinespace[0.3em]
-\multicolumn{4}{l}{\textbf{students - black.on.white}}\\
-\hspace{1em}w.pw & 0.826 & 0.008 & **\\
-\hspace{1em}w.phw & 0.979 & 0.963 & \\
-\hspace{1em}phw.pw & 0.888 & 0.063 & .\\
-\hspace{1em}d.relative.w.pw.w.phw & 0.939 & 0.365 & \\
-\hspace{1em}d.relative.w.pw.ph.pw & 0.913 & 0.151 & \\
-\hspace{1em}d.absolute.w.pw.w.phw & 0.924 & 0.221 & \\
-\hspace{1em}d.absolute.w.pw.ph.pw & 0.910 & 0.136 & \\
-\addlinespace[0.3em]
-\multicolumn{4}{l}{\textbf{testable - white.on.black}}\\
-\hspace{1em}w.pw & 0.854 & 0.000 & ***\\
-\hspace{1em}w.phw & 0.952 & 0.025 & *\\
-\hspace{1em}phw.pw & 0.966 & 0.114 & \\
-\hspace{1em}d.relative.w.pw.w.phw & 0.979 & 0.405 & \\
-\hspace{1em}d.relative.w.pw.ph.pw & 0.884 & 0.000 & ***\\
-\hspace{1em}d.absolute.w.pw.w.phw & 0.956 & 0.035 & *\\
-\hspace{1em}d.absolute.w.pw.ph.pw & 0.894 & 0.000 & ***\\
-\addlinespace[0.3em]
-\multicolumn{4}{l}{\textbf{students - white.on.black}}\\
-\hspace{1em}w.pw & 0.865 & 0.056 & .\\
-\hspace{1em}w.phw & 0.926 & 0.338 & \\
-\hspace{1em}phw.pw & 0.952 & 0.663 & \\
-\hspace{1em}d.relative.w.pw.w.phw & 0.972 & 0.933 & \\
-\hspace{1em}d.relative.w.pw.ph.pw & 0.914 & 0.237 & \\
-\hspace{1em}d.absolute.w.pw.w.phw & 0.948 & 0.603 & \\
-\hspace{1em}d.absolute.w.pw.ph.pw & 0.872 & 0.069 & .\\
-\bottomrule
-\end{tabular}
-\end{table}
+{\centering \includegraphics[width=0.8\linewidth]{vsl_phamtoms_simultaneous_results_files/figure-latex/vsl-simultaneous-fa-plot-accuracy-1} 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{vsl_phamtoms_simultaneous_results_files/figure-latex/vsl-simultaneous-fa-plot-accuracy-1} \end{center}
+}
 
-\begin{table}[!h]
+\caption{Accuracy in the different trial types (words vs. part-words, phantom-words vs. part-words, and words vs. phantom-words), after exclusion of participants whose performance was below 50\% in the word vs. part-word trials. The dots, error bars and violion represent the sample averages, 95\% bootstrap confidence intervals and the distribution of the average accuracy for individual participants, respectively. Empty circles represent individual participants.}\label{fig:vsl-simultaneous-fa-plot-accuracy}
+\end{figure}
 
-\caption{\label{tab:vsl-simultaneous-fa-aov}ANOVA for accuracy scores in the naming experiment}
-\centering
-\resizebox{\linewidth}{!}{
-\begin{tabular}[t]{lrrrrrrlr}
-\toprule
-Effect & DFn & DFd & SSn & SSd & F & p & p<.05 & ges\\
-\midrule
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Black on white - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.type & 1 & 14 & 2.80e+02 & 1352 & 2.901 & 0.111 &  & 0.130\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Black on white - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.type & 1 & 50 & 7.87e+02 & 8241 & 4.775 & 0.034 & * & 0.035\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Black on white - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.type & 1 & 14 & 1.95e+03 & 3505 & 7.777 & 0.014 & * & 0.224\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Black on white - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.type & 1 & 50 & 9.97e+03 & 6664 & 74.791 & 0.000 & * & 0.388\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - White on black - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.type & 1 & 11 & 2.27e+03 & 1412 & 17.672 & 0.001 & * & 0.455\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - White on black - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.type & 1 & 56 & 3.16e+03 & 9967 & 17.743 & 0.000 & * & 0.146\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - White on black - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.type & 1 & 11 & 1.28e+03 & 1884 & 7.452 & 0.020 & * & 0.236\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - White on black - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.type & 1 & 56 & 1.13e+04 & 8525 & 74.016 & 0.000 & * & 0.366\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Both - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}color.type & 1 & 25 & 4.76e+02 & 1826 & 6.510 & 0.017 & * & 0.094\\
-\hspace{1em}test.type & 1 & 25 & 2.18e+03 & 2764 & 19.691 & 0.000 & * & 0.322\\
-\hspace{1em}color.type:test.type & 1 & 25 & 5.93e+02 & 2764 & 5.360 & 0.029 & * & 0.114\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Both - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}color.type & 1 & 106 & 3.23e+02 & 21679 & 1.581 & 0.211 &  & 0.008\\
-\hspace{1em}test.type & 1 & 106 & 3.48e+03 & 18208 & 20.263 & 0.000 & * & 0.080\\
-\hspace{1em}color.type:test.type & 1 & 106 & 3.33e+02 & 18208 & 1.936 & 0.167 &  & 0.008\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Both - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}color.type & 1 & 25 & 2.84e+01 & 5481 & 0.129 & 0.722 &  & 0.003\\
-\hspace{1em}test.type & 1 & 25 & 3.14e+03 & 5388 & 14.571 & 0.001 & * & 0.224\\
-\hspace{1em}color.type:test.type & 1 & 25 & 7.78e+00 & 5388 & 0.036 & 0.851 &  & 0.001\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Both - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}color.type & 1 & 106 & 2.50e-02 & 20004 & 0.000 & 0.991 &  & 0.000\\
-\hspace{1em}test.type & 1 & 106 & 2.12e+04 & 15189 & 147.693 & 0.000 & * & 0.376\\
-\hspace{1em}color.type:test.type & 1 & 106 & 1.68e-01 & 15189 & 0.001 & 0.973 &  & 0.000\\
-\bottomrule
-\end{tabular}}
-\end{table}
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{vsl_phamtoms_simultaneous_results_files/figure-latex/vsl-simultaneous-fa-plot-difference-scores-1} 
+
+}
+
+\caption{Relative difference scores for contrasts between different trial types (word vs. part-word trials vs. phantom-word vs. part-word trials, and word vs. part-word trials vs. word vs. phantom-word trials), after exclusion of participants whose performance was below 50\% in the word vs. part-word trials. The dots, error bars and violion represent the sample averages, 95\% bootstrap confidence intervals and the distribution of the difference scores for individual participants, respectively. Empty circles represent individual participants.}\label{fig:vsl-simultaneous-fa-plot-difference-scores}
+\end{figure}
+
+As shown in Table \ref{tab:vsl-simultaneous-fa-descriptives} and Figure
+\ref{fig:vsl-simultaneous-fa-plot-accuracy}, participants from the
+testable minds sample preferred both words and phantom-words to
+part-words. In contrast, the had no preference for words over
+phantom-words. Similar results were obtained for both color polarity
+types, with no discernible effect of color polarity type. The results
+for student sample were similar, except that there was no preference for
+phantom-words over part-words when black shapes were presented on a
+white background, and that the preference for phantom-words over
+part-words was significantly greater when white shapes were presented on
+a black background. However, given that the result relied on only 12
+participants, I tentatively conclude that the current experiment
+replicate \citep{Endress-Phantoms} and \citep{Endress-Phantoms-Vision},
+in that phantom-words are preferred to part-words, and there is no
+marked preference for words over phantom-words.
+
+To compare performance in the different trial types, I calculated the
+difference scores mentioned above. As shown in Table
+\ref{tab:vsl-simultaneous-fa-descriptives} and Figure
+\ref{fig:vsl-simultaneous-fa-plot-difference-scores}, participants from
+the testable sample performed much better on word vs.~part-word trials
+than on word vs.~phantom-word trials, irrespective of the color polarity
+type. This suggests that participants find discriminations based on TPs
+much easier than discriminations based on frequency of occurrence, which
+is problematic if statistical learning leads to memory for units.
+However, performance was also somewhat better for word vs.~part-word
+trials than for phantom-word vs.~part-word trials, suggesting that we
+cannot rule out that participants might also have some ability to track
+frequencies of occurrence. However, the corresponding difference score
+was much smaller than that comparing words vs.~part-word and word
+vs.~phantom-word trials, and ceased to be significant when all
+participants were included.
+
+In the student sample, results were similar, except that I did not
+detect a performance difference between word vs.~part-word and
+phantom-word vs.~part-word trials when white shapes were presented on a
+black background.
 
 \begin{table}[!h]
 
-\caption{\label{tab:vsl-simultaneous-fa-plot-glmer-correct-calculate}Binary mixed model results}
+\caption{\label{tab:vsl-simultaneous-fa-plot-glmer-correct-calculate-and-print}Results of generalized linear mixed models for trial-by-trial responses, after exclusion of participants whose performance was below 50\% in the word vs. part-word trials.}
 \centering
 \resizebox{\linewidth}{!}{
 \begin{tabular}[t]{lrrlrrlrr}
@@ -389,58 +308,103 @@ Effect & DFn & DFd & SSn & SSd & F & p & p<.05 & ges\\
 term & Estimate & SE & CI & Estimate & SE & CI & t & p\\
 \midrule
 \addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Black on white - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.typew.pw & 0.254 & 0.122 & {}[0.0138, 0.493] & 1.289 & 0.158 & {}[1.01, 1.64] & 2.073 & 0.038\\
+\multicolumn{9}{l}{\textbf{testable - w.pw vs. w.phw}}\\
+\hspace{1em}test.typew.pw & 0.834 & 0.082 & {}[0.674, 0.995] & 2.303 & 0.189 & {}[1.96, 2.7] & 10.190 & 0.000\\
+\hspace{1em}color.typewhite.on.black & 0.001 & 0.082 & {}[-0.159, 0.161] & 1.001 & 0.082 & {}[0.853, 1.17] & 0.011 & 0.991\\
 \addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Black on white - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.typew.pw & 0.264 & 0.220 & {}[-0.166, 0.695] & 1.303 & 0.286 & {}[0.847, 2] & 1.204 & \vphantom{1} 0.229\\
+\multicolumn{9}{l}{\textbf{testable - w.pw vs. phw.pw}}\\
+\hspace{1em}test.typew.pw & 0.460 & 0.114 & {}[0.237, 0.683] & 1.584 & 0.180 & {}[1.27, 1.98] & 4.047 & 0.000\\
+\hspace{1em}color.typewhite.on.black & 0.209 & 0.117 & {}[-0.02, 0.437] & 1.232 & 0.144 & {}[0.98, 1.55] & 1.788 & 0.074\\
+\hspace{1em}test.typew.pw:color.typewhite.on.black & -0.210 & 0.166 & {}[-0.536, 0.116] & 0.810 & 0.135 & {}[0.585, 1.12] & -1.263 & 0.207\\
 \addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Black on white - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.typew.pw & 0.832 & 0.119 & {}[0.598, 1.07] & 2.297 & 0.274 & {}[1.82, 2.9] & 6.982 & \vphantom{1} 0.000\\
+\multicolumn{9}{l}{\textbf{students - w.pw vs. w.phw}}\\
+\hspace{1em}test.typew.pw & 0.646 & 0.163 & {}[0.328, 0.965] & 1.909 & 0.310 & {}[1.39, 2.62] & 3.977 & 0.000\\
+\hspace{1em}color.typewhite.on.black & -0.062 & 0.166 & {}[-0.387, 0.263] & 0.940 & 0.156 & {}[0.679, 1.3] & -0.374 & 0.708\\
 \addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Black on white - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.typew.pw & 0.674 & 0.218 & {}[0.246, 1.1] & 1.961 & 0.428 & {}[1.28, 3.01] & 3.089 & 0.002\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - White on black - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.typew.pw & 0.459 & 0.113 & {}[0.236, 0.681] & 1.582 & 0.180 & {}[1.27, 1.98] & 4.042 & 0.000\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - White on black - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
+\multicolumn{9}{l}{\textbf{students - w.pw vs. phw.pw}}\\
 \hspace{1em}test.typew.pw & 0.808 & 0.244 & {}[0.33, 1.29] & 2.243 & 0.547 & {}[1.39, 3.62] & 3.315 & 0.001\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - White on black - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.typew.pw & 0.836 & 0.113 & {}[0.616, 1.06] & 2.308 & 0.260 & {}[1.85, 2.88] & 7.422 & 0.000\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - White on black - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.typew.pw & 0.613 & 0.244 & {}[0.135, 1.09] & 1.847 & 0.450 & {}[1.15, 2.98] & 2.516 & 0.012\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Both - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.typew.pw & 0.250 & 0.121 & {}[0.0119, 0.488] & 1.284 & 0.156 & {}[1.01, 1.63] & 2.058 & 0.040\\
-\hspace{1em}test.typephw.pw:color.typewhite.on.black & -0.209 & 0.117 & {}[-0.437, 0.02] & 0.812 & 0.095 & {}[0.646, 1.02] & -1.788 & 0.074\\
-\hspace{1em}test.typew.pw:color.typewhite.on.black & 0.002 & 0.123 & {}[-0.239, 0.242] & 1.002 & 0.123 & {}[0.788, 1.27] & 0.012 & 0.990\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Both - Word vs. Part-Words vs. Phantom-Words vs. Part-Words}}\\
-\hspace{1em}test.typew.pw & 0.264 & 0.220 & {}[-0.166, 0.695] & 1.303 & 0.286 & {}[0.847, 2] & 1.204 & 0.229\\
-\hspace{1em}test.typephw.pw:color.typewhite.on.black & -0.512 & 0.226 & {}[-0.955, -0.0691] & 0.599 & 0.135 & {}[0.385, 0.933] & -2.265 & 0.023\\
-\hspace{1em}test.typew.pw:color.typewhite.on.black & 0.031 & 0.238 & {}[-0.435, 0.498] & 1.032 & 0.245 & {}[0.647, 1.64] & 0.132 & 0.895\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{testable - Both - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.typew.pw & 0.832 & 0.119 & {}[0.598, 1.07] & 2.297 & 0.274 & {}[1.82, 2.9] & 6.982 & 0.000\\
-\hspace{1em}test.typew.phw:color.typewhite.on.black & -0.003 & 0.111 & {}[-0.221, 0.215] & 0.997 & 0.111 & {}[0.802, 1.24] & -0.028 & 0.978\\
-\hspace{1em}test.typew.pw:color.typewhite.on.black & 0.002 & 0.120 & {}[-0.234, 0.238] & 1.002 & 0.121 & {}[0.791, 1.27] & 0.013 & 0.989\\
-\addlinespace[0.3em]
-\multicolumn{9}{l}{\textbf{students - Both - Word vs. Part-Words vs. Words vs. Phantom-Words}}\\
-\hspace{1em}test.typew.pw & 0.672 & 0.218 & {}[0.245, 1.1] & 1.958 & 0.426 & {}[1.28, 3] & 3.088 & 0.002\\
-\hspace{1em}test.typew.phw:color.typewhite.on.black & 0.089 & 0.226 & {}[-0.354, 0.532] & 1.093 & 0.247 & {}[0.702, 1.7] & 0.394 & 0.693\\
-\hspace{1em}test.typew.pw:color.typewhite.on.black & 0.031 & 0.240 & {}[-0.439, 0.502] & 1.032 & 0.248 & {}[0.645, 1.65] & 0.131 & 0.896\\
+\hspace{1em}color.typewhite.on.black & 0.512 & 0.226 & {}[0.0691, 0.955] & 1.669 & 0.377 & {}[1.07, 2.6] & 2.266 & 0.023\\
+\hspace{1em}test.typew.pw:color.typewhite.on.black & -0.543 & 0.328 & {}[-1.19, 0.0997] & 0.581 & 0.191 & {}[0.305, 1.1] & -1.656 & 0.098\\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-\hypertarget{acurracy-by-difference-scores}{%
-\subsubsection{Acurracy by difference
-scores}\label{acurracy-by-difference-scores}}
+I confirmed these results using generalized linear mixed models with the
+fixed factor predictors trial type and and color polarity as well as
+their interaction, and a random intercept for participants. I fitted
+separate model for each sample (testable vs.~students) and trial
+contrast (word vs.~part-word trials vs.~word vs.~phantom-word trials and
+word vs.~part-words and phantom-word vs.~part-word trials). The models
+showed that performance on word vs.~part-word trials is significantly
+better than for word vs.~phantom-word trials. In the testable
+population, they also showed that performance on word vs.~part-word
+trials was significantly better than on phantom-word vs.~part-word
+trials, though this predictor was not significant in the student
+population. Further, the odds ratio associated with the former contrast
+was almost twice as high as that from the latter contrast.
 
-\begin{center}\includegraphics[width=0.8\linewidth]{vsl_phamtoms_simultaneous_results_files/figure-latex/vsl-simultaneous-fa-plot-difference-scores-1} \end{center}
+There were generally no main effects or interactions with polarity type,
+though students performed somewhat better for black on white displays.
+
+\section{Discussion}\label{discussion}
+
+\clearpage
+
+\section{Appendix 1: Results with the full
+sample}\label{appendix-1-results-with-the-full-sample}
+
+As shown in Table \ref{tab:vsl-simultaneous-fa-descriptives-full-sample}
+and Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-full-sample},
+participants from the testable minds sample preferred both words and
+phantom-words to part-words. In contrast, the had no preference for
+words over phantom-words. Similar results were obtained for both color
+polarity types, with no discernible effect of color polarity type. In
+the complete student sample, in contrast, the only significant
+preference was that for words over part-words, but only when black
+shapes were presented on a white background. These contrasting results
+presumably reflect the finding that, in other experiments that can
+implement attention check manipulations, 30\% to 50\% of such samples
+need to be excluded due to insufficient attention.
+
+As a result, I tentatively conclude that, at least in the testable minds
+sample, the current experiment replicate \citep{Endress-Phantoms} and
+\citep{Endress-Phantoms-Vision}, in that phantom-words are preferred to
+part-words, and there is no marked preference for words over
+phantom-words.
+
+To compare performance across trial types, I calculated the difference
+scores mentioned above. As shown in Table
+\ref{tab:vsl-simultaneous-fa-descriptives-full-sample} and Figure
+\ref{fig:vsl-simultaneous-fa-plot-difference-scores-full-sample},
+participants from the testable sample performed much better on word
+vs.~part-word trials than on word vs.~phantom-word trials, irrespective
+of the color polarity type. This suggests that participants find
+discriminations based on TPs much easier than discriminations based on
+frequency of occurrence, which is problematic if statistical learning
+leads to memory for units. In contrast to the results with the
+restricted sample, performance was not significantly different between
+word vs.~part-word trials and phantom-word vs.~part-word trials.
+
+In the student sample, only the comparison between word vs.~part-word
+trials and word vs.~phantom-word trials was statistically different from
+zero, but only when black shapes were presented on a white background.
+However, and as mentioned above, this sample likely contained a sizable
+proportion of participants who paid little attention to the stimuli.
+
+I confirmed these results using generalized linear mixed models with the
+fixed factor predictors trial type and and color polarity as well as
+their interaction, and a random intercept for participants. I fitted
+separate model for each sample (testable vs.~students) and trial
+contrast (word vs.~part-word trials vs.~word vs.~phantom-word trials and
+word vs.~part-words and phantom-word vs.~part-word trials). As shown in
+Table
+\ref{tab:vsl-simultaneous-fa-plot-glmer-correct-calculate-and-print-full-sample},
+the models showed that performance on word vs.~part-word trials is
+significantly better than for word vs.~phantom-word trials. In contrast,
+there was no difference between word vs part-word and phantom-word
+vs.~part-word trials.
+
+There were generally no main effects or interactions with polarity type.
 
   \bibliography{/Users/endress/ansgar.bib}
 

@@ -5,7 +5,9 @@ papers/
 ethics/
 
 # Upload once anonymized
-results/
+results/777549_phantoms_fiser_aslin_city/*.csv
+results/868923_phantoms_fiser_aslin_testable_minds/*.csv
+
 
 *.docx
 
