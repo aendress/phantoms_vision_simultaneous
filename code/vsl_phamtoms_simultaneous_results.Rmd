@@ -84,19 +84,23 @@ if (Sys.info()[["user"]] %in% c("ansgar", "endress")){
 }
 
 
-library (knitr)
-library (kableExtra)
+librarian::shelf(
+    tidyverse,
+    stringr,
+    knitr,
+    kableExtra,
+    ez,
+    pwr
+# broom,
+#broom.mixed,
+)
 
-library (ez)
-# library (broom)
-# library(broom.mixed) 
-
+# Don't load simr as it redefines .
+if(!librarian::check_installed(simr))
+    stop("simr is not installed.")
 ```
 
-```{r helper-function}
-
-library(tidyverse)
-library(stringr)
+```{r helper-functions}
 
 #' Swap occurrences of two strings in a vector
 #'
@@ -121,6 +125,48 @@ swap_strings_in_vector <- function(string_vector = ., string1, string2) {
     str_replace_all(fixed(placeholder), string2)
 }
 
+
+get.power.for.all.effects <- function(model = ., nsim, return.details = FALSE, exclude.intercept = TRUE, ...) {
+    
+    get.fixed.eff.names <- function(model = ., excude.intercept = TRUE){
+        
+        all.fixed.effects <- names(fixef(model))
+        
+        if(exclude.intercept){
+            return(all.fixed.effects, "(Intercept)")
+        } else {
+            return(all.fixed.effects)
+        }
+        
+    }
+
+    # Extract the names of all fixed effects
+    fixed.effects <- get.fixed.eff.names(model, exclude.intercept)
+    
+
+    power.results <- purrr::map_dfr(fixed.effects,
+                                    function(current.effect){
+                                        power.results <- simr::powerSim(
+                                            fit = model, 
+                                            test = simr::fixed(current.effect, "z"), nsim = nsim, ...)
+                                        
+                                        
+                                        simr:::summary.powerSim(power.results) %>% 
+                                            dplyr::rename_with(~ str_c("power.", .x)) %>% 
+                                            dplyr::mutate(term = current.effect,
+                                                          .before = 1)
+                                    })
+ 
+    
+    if(!return.details){
+        power.results <- power.results %>% 
+            dplyr::select(power.results, c(term, power.mean))
+    }
+    
+
+    return(power.results)
+
+}
 
 
 
@@ -169,11 +215,6 @@ dat.vsl.simultaneous.fa %>%
 # Predictions
 The predictions for the current experiment were unclear. On the one hand, it is plausible that observers might encode entire scenes when they are presented simultaneously. If so, they should not accept phantom-words. On the other hand, statistical learning might operate similarly for simultaneous as for sequential presentation. If so, the results with sequential presentations should be replicated, especially because the shapes appear as distinct individual shapes rather than wholes. Further, presenting the shapes   as whole in an object (i.e., in the white on black presentation) might encourage observers to process the combination of shapes as a single hole, leading to the rejection of phantom words.
 
-REMOVED INTERACTION TERM IN GLMM
-
-MAKE SEPARATE TABLES FOR GLMMS
-
-
 
 
 # Analysis 
@@ -190,27 +231,49 @@ dat.vsl.simultaneous.fa %>%
     
 
 
-if (REMOVE.BAD.SUBJ) {
+# if (REMOVE.BAD.SUBJ) {
+#     dplyr::anti_join(
+#         dat.vsl.simultaneous.fa,
+#         dat.vsl.simultaneous.fa.bad.subj,
+#         by = "filename") -> dat.vsl.simultaneous.fa
+#     
+# }
+
+# Instead of excluding subjects, we create an extra data frame for the restricted sample
+
+dat.vsl.simultaneous.fa <- dplyr::bind_rows(
+    dat.vsl.simultaneous.fa %>% 
+        dplyr::mutate(sample.type = "Full sample"),
+    
     dplyr::anti_join(
         dat.vsl.simultaneous.fa,
         dat.vsl.simultaneous.fa.bad.subj,
-        by = "filename") -> dat.vsl.simultaneous.fa
+        by = "filename") %>% 
+        dplyr::mutate(sample.type = "Restricted sample")
+)
     
-}
+
+
+
 
 ```
 
-The main experiment recruited participants from testable minds (https://minds.testable.org/). I pilot experiment recruited participants from first year students at City, University of London (UK). In the latter population, other experiments typically need to exclude 30% to 50% of the sample due to insufficient attention. Unfortunately, the present experiment does not offer a clear performance-based criterion to make sure that participants paid attention to the stimuli, as the task might be genuinely difficult. However, given that our main interest lies in the performance on trials involving phantom-words for participants who succeeded in the statistical learning task, it is more conservative to exclude participants whom might not have paid attention to the task, even if this overestimates the statistical learning abilities. 
+The main experiment recruited participants from testable minds (https://minds.testable.org/). A pilot experiment recruited participants from first year students at City, University of London (UK). In the latter population, other experiments typically need to exclude 30% to 50% of the sample due to insufficient attention. Unfortunately, the present experiment does not offer a clear performance-based criterion to make sure that participants paid attention to the stimuli, as the task might be genuinely difficult. However, given that my main interest lies in the performance on trials involving phantom-words for participants who succeeded in the statistical learning task, it is more conservative to exclude participants whom might not have paid attention to the task, even if this overestimates the statistical learning abilities. 
 
-As a result, I rely on the assumption that earlier statistical learning literature has shown that participants can learn statistical relations *in principle*, and exclude those participants not exceeding an accuracy of 50% on word vs. part-word trials. This criterion led to the removal of `r dat.vsl.simultaneous.fa.bad.subj %>% group_by (population) %>% summarize (N = n ()) %>% pull (N) %>% knitr::combine_words()` participants from the `r dat.vsl.simultaneous.fa.bad.subj %>% group_by (population) %>% summarize (N = n ()) %>% pull (population) %>% knitr::combine_words()` samples, respectively.
+As a result, I rely on the assumption that earlier statistical learning literature has shown that participants can learn statistical relations *in principle*, and exclude those participants not exceeding an accuracy of 50% on word vs. part-word trials. This criterion led to the removal of `r dat.vsl.simultaneous.fa.bad.subj %>% group_by (population) %>% summarize (N = n ()) %>% pull (N) %>% knitr::combine_words()` participants from the `r dat.vsl.simultaneous.fa.bad.subj %>% group_by (population) %>% summarize (N = n ()) %>% pull (population) %>% knitr::combine_words()` samples, respectively. I present the results from these restricted samples jointly with the results from the full sample. The demographics of the full sample as well as the restricted sample are given in Table \ref{tab:vsl-simultaneous-fa-demographics}. In the student sample, age and gender were not recorded due to experimenter error.
 
-The pattern of significance was very similar when all participants were excluded, with the following differences. First, for the testable minds sample, performance on the words vs. part-words trials was no longer greater than on the phantom-words vs part-words trials, both when shapes were presented in black on a white background and when the polarity was inverted. Given that earlier, sequential experiments involving phantom-words showed equivalent performance for both trial types, excluding participants is thus more conservative for the current purposes. Second, for the student sample, the performance difference between these trial types also ceased to be significant when all participants are included. Further, when items were presented as black shapes on white background, there was no significant preference for words over part-words, suggesting that some of these participants did not pay attention to the experiment. 
+## Analysis strategy
 
-The demographics of the remaining participants is given in Table \ref{tab:vsl-simultaneous-fa-demographics}; age and gender were not recorded due to experimenter error. 
+I will analyze the results using two types of analyses. First, I compare the performance in the different trial types to the chance level of 50% using Wilcoxon tests. To compare performance across trial types, I calculate normalized difference scores, that is, $\frac{\text{accuracy}_{\text{trial type 1}} - \text{accuracy}_{\text{trial type 2}}}{\text{accuracy}_{\text{trial type 1}} + \text{accuracy}_{\text{trial type 2}}}$. These difference scores are the compared to the chance level of zero, again using Wilcoxon tests. I also ask whether any of these results is affected by the color polarity type (i.e., black on white vs. white on black).  Following [@Rosenthal1999], I use these focused analyses to target the contrasts of interest, and so that the visualizations match the statistical tests. 
+
+Second, I will confirm these results using a set of generalized linear mixed models with the fixed factor predictors trial type and and color polarity as well as their interaction, and a random intercept for participants. I fitted separate model for each (full vs. restricted) sample and trial contrast (word vs. part-word trials vs. word vs. phantom-word trials and word vs. part-words and phantom-word vs. part-word trials). 
+
+Results from the much larger main sample will be presented in the main text. Results from the student sample will be presented in Supplementary Online Material XXX. 
+
 
 ```{r vsl-simultaneous-fa-average}
 dat.vsl.simultaneous.fa %>% 
-    dplyr::group_by (population, filename, color.type, test.type) %>% 
+    dplyr::group_by (population, sample.type, filename, color.type, test.type) %>% 
     dplyr::summarize (
         correct = 100*mean (correct)) -> dat.vsl.simultaneous.fa.m
 
@@ -218,33 +281,32 @@ dat.vsl.simultaneous.fa %>%
 
 ```{r vsl-simultaneous-fa-demographics}
 
-# Print only for runs where bad subjects are excluded
-if(REMOVE.BAD.SUBJ){
-    bind_rows(
+
+bind_rows(
         dat.vsl.simultaneous.fa %>% 
-            get.demographics2(subj = filename, gender = gender, age = age, population, color.type, subjectGroup) %>% 
+            get.demographics2(subj = filename, gender = gender, age = age, population, sample.type, color.type, subjectGroup) %>% 
             dplyr::mutate(subjectGroup = as.character(subjectGroup)),
         dat.vsl.simultaneous.fa %>% 
-            get.demographics2(subj = filename, gender = gender, age = age, population, color.type) %>% 
+            get.demographics2(subj = filename, gender = gender, age = age, population, sample.type, color.type) %>% 
             dplyr::mutate(subjectGroup = "TOTAL")
     ) %>% 
         dplyr::filter(subjectGroup == "TOTAL") %>% 
         dplyr::select(-subjectGroup) %>% 
         dplyr::mutate(color.type = str_replace_all(color.type, "\\.", " ")) %>% 
         #dplyr::arrange(desc(population), color.type, subjectGroup) %>% 
-        dplyr::arrange(desc(population), color.type) %>% 
+        dplyr::arrange(sample.type, desc(population), color.type) %>% 
         knitr::kable(
-            col.names = c("Population", "Color polarity", "N", "Females", "Males", "Other", "Age", "Age range"),
-            caption = "Demographics of the final sample, after excluding participants whose accuracy on word vs. part-words trials was below 50 percent. For the student population, age and gender have not been recorded due to experimenter error.",
+            col.names = c("Population", "Sample type", "Color polarity", "N", "Females", "Males", "Other", "Age", "Age range"),
+            caption = "Demographics of the full sample and the restricted sample, where participants were excluded whose accuracy on word vs. part-words trials did not exceed 50 percent. For the student population, age and gender have not been recorded due to experimenter error.",
             booktabs = TRUE) %>% 
         kableExtra::kable_classic_2()
-}
+
 ```
 
 ```{r vsl-simultaneous-fa-widen}
 dat.vsl.simultaneous.fa.m %>% 
     tidyr::pivot_wider(
-        id_cols = c(population, filename, color.type),
+        id_cols = c(population, sample.type, filename, color.type),
         names_from = test.type,
         values_from = correct,
         names_prefix = "correct.",
@@ -265,6 +327,8 @@ dat.vsl.simultaneous.fa.m.wide %>%
         cols = starts_with("d."),
         names_to = "test.type",
         values_to = "d") -> dat.vsl.simultaneous.fa.m.wide.single.d.col
+
+
 ```
 
 ## Analysis by accuracy
@@ -276,7 +340,7 @@ dat.vsl.simultaneous.fa.m.wide %>%
 rbind(
     # Separate models for each test type
     dat.vsl.simultaneous.fa %>% 
-        dplyr::group_by(population, test.type) %>% 
+        dplyr::group_by(population, sample.type, test.type) %>% 
         dplyr::group_modify(~ anova(glmer(correct ~ color.type + 
                                               (1|filename), 
                                           control=glmerControl(optimizer="bobyqa"),
@@ -293,7 +357,7 @@ rbind(
     
     # Overall
     dat.vsl.simultaneous.fa %>% 
-        dplyr::group_by(population) %>% 
+        dplyr::group_by(population, sample.type) %>% 
         dplyr::group_modify(~ anova(glmer(correct ~ test.type * color.type + 
                                               (1|filename), 
                                           control=glmerControl(optimizer="bobyqa"),
@@ -313,393 +377,608 @@ rbind(
     
 ```
 
-We will analyze the results using two types of analyses. First, I compare the performance in the different trial types to the chance level of 50% using Wilcoxon test. To compare performance across trial types, I calculate normalized difference scores, that is, $\frac{\text{accuracy}_{\text{trial type 1}} - \text{accuracy}_{\text{trial type 2}}}{\text{accuracy}_{\text{trial type 1}} + \text{accuracy}_{\text{trial type 2}}}$. These difference scores are the compared to the chance level of zero, again using Wilcoxon tests. I also ask whether any of these results is affected by the color polarity type (i.e., black on white vs. white on black). 
-
-Second, we will confirm these results using a set of generalized linear models.
 
 
-```{r vsl-simultaneous-fa-descriptives}
+```{r vsl-simultaneous-fa-descriptives-prepare-simple}
 
-# Print only for runs where bad subjects are excluded
-if(REMOVE.BAD.SUBJ){
-    bind_rows (
-        # Accuracy - descriptives 
+
+dat.vsl.simultaneous.fa.descriptives.simple <- dplyr::bind_rows(
+    # Accuracy - descriptives 
+    ## Collapsed across polarity types
+    dat.vsl.simultaneous.fa.m %>% 
+        dplyr::group_by(population, sample.type, test.type) %>% 
+        dplyr::summarize(N = n(),
+                         M = mean (correct), 
+                         SE = se (correct),
+                         SD = sd(correct),
+                         p.wilcox = wilcox.p(correct, 50),
+                         power = pwr::pwr.t.test(d = (M - 50)/SD, n = N, sig.level = .05, power = NULL,  type  = "one.sample", alternative = "two.sided")$power,
+        #ss.80  = pwr::pwr.t.test(d = (M - 50)/SD,  sig.level = .05, power = .8,  type  = "one.sample", alternative = "two.sided")$n,
+                         .groups = "drop") %>% 
+        dplyr::select(-SD) %>% 
+        dplyr::mutate(r.wilcox = get.r.from.wilcox.p(N = N, p = p.wilcox)) %>% 
+        dplyr::mutate(color.type = "Zcombined", .after = "sample.type"),
+    
+    ## Separately by polarity type
+    dat.vsl.simultaneous.fa.m %>% 
+        dplyr::group_by(population, sample.type, color.type, test.type) %>% 
+        dplyr::summarize(N = n(),
+                         M = mean(correct), 
+                         SE = se(correct),
+                         SD = sd(correct),
+                         p.wilcox = wilcox.p(correct, 50),
+                         power = pwr::pwr.t.test(d = (M - 50)/SD, n = N, sig.level = .05, power = NULL,  type  = "one.sample", alternative = "two.sided")$power,
+        #ss.80  = pwr::pwr.t.test(d = (M - 50)/SD,  sig.level = .05, power = .8,  type  = "one.sample", alternative = "two.sided")$n,                         
+                         .groups = "drop") %>% 
+        dplyr::mutate(r.wilcox = get.r.from.wilcox.p(N = N, p = p.wilcox)) %>% 
+        dplyr::select(-SD))
+
+
+```
+
+```{r vsl-simultaneous-fa-descriptives-prepare-diff-scores}
+
+dat.vsl.simultaneous.fa.descriptives.diff.scores <- dplyr::bind_rows(
+    # Difference scores - descriptives
+    ## Collapsed across polarity types
+    dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
+        dplyr::select (population, sample.type, filename, color.type, test.type, d) %>% 
+        group_by(population, sample.type, test.type) %>% 
+        summarize(N = n(),
+                  M = mean (d), 
+                  SE = se (d),
+                  SD = sd(d),
+                  p.wilcox = wilcox.p(d, 0),
+                  power = pwr::pwr.t.test(d = M/SD, n = N, sig.level = .05, power = NULL,  type  = "one.sample", alternative = "two.sided")$power,
+        #ss.80  = pwr::pwr.t.test(d = M/SD,  sig.level = .05, power = .8,  type  = "one.sample", alternative = "two.sided")$n,                  
+                  .groups = "drop") %>% 
+        dplyr::mutate(r.wilcox = get.r.from.wilcox.p(N = N, p = p.wilcox)) %>% 
+        dplyr::mutate(color.type = "Zcombined", .after = "sample.type"),
+    
+    ## Separately by polarity type
+    dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
+        dplyr::select (population, sample.type, filename, color.type, test.type, d) %>% 
+        group_by(population, sample.type, color.type, test.type) %>% 
+        summarize(N = n(),
+                  M = mean (d), 
+                  SE = se (d),
+                  SD = sd(d),
+                  p.wilcox = wilcox.p(d, 0),
+                  power = pwr::pwr.t.test(d = M/SD, n = N, sig.level = .05, power = NULL,  type  = "one.sample", alternative = "two.sided")$power,
+                  #ss.80  = pwr::pwr.t.test(d = M/SD,  sig.level = .05, power = .8,  type  = "one.sample", alternative = "two.sided")$n,                  
+                  .groups = "drop") %>% 
+        dplyr::mutate(r.wilcox = get.r.from.wilcox.p(N = N, p = p.wilcox))) %>%     
+        dplyr::select(-SD)
+```
+
+```{r vsl-simultaneous-fa-descriptives-prepare-effecs-polarity-type}
+
+dat.vsl.simultaneous.fa.descriptives.effect.polarity <- dplyr::bind_rows(
+    
+    # Accuracy - effect of color.type
+    dplyr::left_join(
+        # Calculate descriptives
         dat.vsl.simultaneous.fa.m %>% 
-            group_by(population, color.type, test.type) %>% 
-            summarize(N = n(),
-                      M = mean (correct), 
-                      SE = se (correct),
-                      p.wilcox = wilcox.p(correct, 50)),
-        
-        # Accuracy - effect of color.type
-        dat.vsl.simultaneous.fa.m %>% 
-            dplyr::group_by(population, test.type) %>% 
+            dplyr::group_by(population, sample.type, test.type) %>% 
             rstatix::wilcox_test(correct ~ color.type, paired = FALSE) %>% 
-            dplyr::select(population, test.type, p) %>% 
             dplyr::rename(p.wilcox = p) %>% 
+            dplyr::mutate(r.wilcox = get.r.from.wilcox.p(N = n1 + n2, p = p.wilcox)) %>% 
+            dplyr::select(population, sample.type, test.type, p.wilcox, r.wilcox) %>% 
             dplyr::mutate(color.type = "zEffect of color polarity"),
         
-        # Difference scores - descriptives
-        dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
-            dplyr::select (population, filename, color.type, test.type, d) %>% 
-            group_by(population, color.type, test.type) %>% 
-            summarize(N = n(),
-                      M = mean (d), 
-                      SE = se (d),
-                      p.wilcox = wilcox.p(d, 0)),
+        # Calculate power
+        dat.vsl.simultaneous.fa.descriptives.simple %>% 
+            dplyr::filter(color.type != "Zcombined") %>% 
+            dplyr::mutate(SD = SE * sqrt(N-1)) %>% 
+            dplyr::select(population, sample.type, test.type, color.type, N, M, SD) %>% 
+            tidyr::pivot_wider(id_cols = c(population, sample.type, test.type),
+                               names_from = color.type,
+                               values_from = c(N, M, SD)) %>% 
+            dplyr::mutate(sd.pooled = sqrt(((N_black.on.white - 1) * SD_black.on.white^2 + 
+                                                (N_white.on.black - 1) * SD_white.on.black^2) / 
+                                               (N_black.on.white + N_white.on.black - 2)),
+                          eff.size = abs(M_white.on.black - M_black.on.white)/ sd.pooled,
+                          power = pwr::pwr.t2n.test(n1 = N_white.on.black, n2 = N_black.on.white, d = eff.size, sig.level = .05, power = NULL,  alternative = "two.sided")$power) %>% 
+                          #ss.80  = purrr::map_dbl(eff.size, 
+                                                  #~ 2 * pwr::pwr.t.test(d = .x, sig.level = .05, power = .8,  type  = "two.sample", alternative = "two.sided")$n)) %>% 
+            dplyr::select(population, sample.type, test.type, power),
         
-        # Difference scores - effect of color type
+        by = c("population", "sample.type", "test.type")),
+    
+    
+    
+    # Difference scores - effect of color type
+    dplyr::left_join(
+        # Calculate descriptives
         dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
-            dplyr::group_by(population, test.type) %>% 
+            dplyr::group_by(population, sample.type, test.type) %>% 
             rstatix::wilcox_test(d ~ color.type, paired = FALSE) %>% 
-            dplyr::select(population, test.type, p) %>% 
             dplyr::rename(p.wilcox = p) %>% 
-            dplyr::mutate(color.type = "zEffect of color polarity")) %>% 
-        dplyr::arrange(desc(population), color.type, desc(test.type)) %>% 
-        tidyr::unite(population.color.type, population, color.type, sep = " - ") %>% 
-        dplyr::mutate(population.color.type.n = ifelse(is.na(N), 
-                                                       population.color.type,
-                                                       str_c(population.color.type, " (N = ", N, ")")), .keep = "unused") %>% 
-        kable.packed("population.color.type.n",
-                     caption = "Descriptives of accuracy scores and difference scores, after exclusion of participants whose performance was below 50 percent on word vs. part-word trials. The p value reflects a Wilcoxon test against the chance levels of 50 percent and of 0 for accuracies and difference scores, respectively. The effect of color polarity represents a Wilcoxon test comparing all of these dependent variables as a function of color polarity",
-                     #col.names = c("", "*M*", "*SE*", "*p.wilcoxon*"),
-                     booktabs = TRUE) %>%
-        kableExtra::kable_classic_2()
-}
+            dplyr::mutate(r.wilcox = get.r.from.wilcox.p(N = n1 + n2, p = p.wilcox)) %>% 
+            dplyr::select(population, sample.type, test.type, p.wilcox, r.wilcox) %>% 
+            dplyr::mutate(color.type = "zEffect of color polarity"),
+    
+    
+    # Calculate power
+        dat.vsl.simultaneous.fa.descriptives.diff.scores %>% 
+            dplyr::filter(color.type != "Zcombined") %>% 
+            dplyr::mutate(SD = SE * sqrt(N-1)) %>% 
+            dplyr::select(population, sample.type, test.type, color.type, N, M, SD) %>% 
+            tidyr::pivot_wider(id_cols = c(population, sample.type, test.type),
+                               names_from = color.type,
+                               values_from = c(N, M, SD)) %>% 
+            dplyr::mutate(sd.pooled = sqrt(((N_black.on.white - 1) * SD_black.on.white^2 + 
+                                                (N_white.on.black - 1) * SD_white.on.black^2) / 
+                                               (N_black.on.white + N_white.on.black - 2)),
+                          eff.size = abs(M_white.on.black - M_black.on.white)/ sd.pooled,
+                          power = pwr::pwr.t2n.test(n1 = N_white.on.black, n2 = N_black.on.white, d = eff.size, sig.level = .05, power = NULL,  alternative = "two.sided")$power) %>% 
+                          #ss.80  = purrr::map_dbl(eff.size, 
+                                                  #~ 2 * pwr::pwr.t.test(d = .x, sig.level = .05, power = .8,  type  = "two.sample", alternative = "two.sided")$n)) %>% 
+            dplyr::select(population, sample.type, test.type, power),
+        
+        by = c("population", "sample.type", "test.type")))
+
+
+
+
+```    
+
+```{r vsl-simultaneous-fa-descriptives-prepare-combine-and-correct}
+
+l.vsl.simultaneous.fa.descriptives <- dplyr::bind_rows(
+    dat.vsl.simultaneous.fa.descriptives.simple,
+    dat.vsl.simultaneous.fa.descriptives.diff.scores,
+    dat.vsl.simultaneous.fa.descriptives.effect.polarity) %>% 
+    
+    # Correct for repeated measures
+    dplyr::group_by(population, sample.type) %>% 
+    dplyr::mutate(p.hb = p.adjust(p.wilcox, method = "holm"),
+                  .after = "p.wilcox") %>% 
+    dplyr::ungroup() %>% 
+    
+    dplyr::arrange(desc(population), sample.type, color.type, desc(test.type)) %>%
+    tidyr::unite(sample.type.color.type, sample.type, color.type, sep = " - ") %>%
+    dplyr::mutate(sample.type.color.type.n = ifelse(is.na(N),
+                                                    sample.type.color.type,
+                                                    str_c(sample.type.color.type, " (N = ", N, ")")), .keep = "unused") %>% 
+    dplyr::relocate(r.wilcox, .before = "power") %>% 
+    split(f = as.factor(.$population))
+
+```
+
+```{r vsl-simultaneous-fa-descriptives-print-testable}
+l.vsl.simultaneous.fa.descriptives$testable %>% 
+    dplyr::select(-population) %>% 
+    kable.packed("sample.type.color.type.n",
+                 caption = "Descriptives of accuracy scores and difference scores for the main sample. The restricted sample consists of participants whose performance exceeded 50\\% on word vs. part-word trials. The p value reflects a Wilcoxon test against the chance levels of 50 percent and of zero for accuracies and difference scores, respectively. The effect of color polarity represents a Wilcoxon test comparing all of these dependent variables as a function of color polarity. The p value was corrected for repeated testing using the Holm-Bonferroni method, separately for each (full or restricted) sample (pHB). In the restricted sample, comparisons of the word vs. part-word contrast against chance are not meaningful as participants were selected based on their performance in this comparison.",
+                 #col.names = c("", "*M*", "*SE*", "*p.wilcoxon*"),
+                 booktabs = TRUE,
+                 longtable = TRUE
+                 #escape = FALSE
+                 ) %>%
+    kableExtra::kable_styling(latex_options = c("striped",
+                                                "scale_down",
+                                                "hold_position",
+                                                "repeat_header")) %>%
+    kableExtra::kable_classic_2()
+
+
 ```
 
 
 
+```{r vsl-simultaneous-fa-plot-accuracy-prepare-by-polarity}
 
+p.vsl.simultaneous.fa.accuracy.by.polarity <- dat.vsl.simultaneous.fa.m %>%
+    dplyr::mutate (test.type = factor(test.type, 
+                                      levels = c("w.pw", "phw.pw", "w.phw"))) %>% 
+    dplyr::mutate(population = factor(population, levels = c("testable", "students"))) %>% 
+    dplyr::group_by(population) %>% 
+    dplyr::group_modify(~ {
+        p <- ggplot(.x, aes(x = test.type, y = correct)) %>% 
+            violin_plot_template(yintercept = 50) +
+            scale_x_discrete("Test type",
+                             labels = c("Word vs. part-word", 
+                                        "Phantom-word vs .part-word", 
+                                        "Word vs. Phantom-Word") %>% 
+                                 str_wrap(width = 15)) +
+            theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
+            scale_y_continuous("% Correct") + 
+            facet_grid(sample.type ~ color.type,
+                       labeller = labeller (color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
+                                                str_to_sentence)) 
+        
+        # Return the plot as a one-row tibble
+        tibble(plot = list(p))
+    },
+    .keep = TRUE) %>% 
+    dplyr::ungroup() %>% 
+    tibble::deframe()
+```
 
-```{r vsl-simultaneous-fa-plot-accuracy, fig.cap="Accuracy in the different trial types (words vs. part-words, phantom-words vs. part-words, and words vs. phantom-words), after exclusion of participants whose performance was below 50\\% in the word vs. part-word trials. The dots, error bars and violion represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the average accuracy for individual participants, respectively. Empty circles represent individual participants."}
+```{r vsl-simultaneous-fa-plot-accuracy-prepare-polarity-collapsed}
 
-# Print only for runs where bad subjects are excluded
-if(REMOVE.BAD.SUBJ){
-    
-    dat.vsl.simultaneous.fa.m %>% 
-        mutate (test.type = factor(test.type, 
-                                   levels = c("w.pw", "phw.pw", "w.phw"))) %>% 
-        dplyr::mutate(population = factor(population, levels = c("testable", "students"))) %>% 
-        ggplot(aes(x = test.type, y = correct)) %>% 
-        violin_plot_template(yintercept = 50) +
-        scale_x_discrete("Test type",
-                         labels = c("Word vs. part-word", 
-                                    "Phantom-word vs .part-word", 
-                                    "Word vs. Phantom-Word") %>% 
-                             str_wrap(width = 15)) +
-        theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
-        scale_y_continuous("% Correct") + 
-        facet_grid(population ~ color.type,
-                   labeller = labeller (color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
-                                            str_to_sentence)) -> p.vsl.simultaneous.fa.accuracy
-    
-    p.vsl.simultaneous.fa.accuracy
-    
-    # ggsave(paste0 (FIG.DIR, "p.vsl.simultaneous.fa.acc.pdf"),
-    #        device = "pdf")
-}
+p.vsl.simultaneous.fa.accuracy.polarity.collapsed <- dat.vsl.simultaneous.fa.m %>%
+    dplyr::mutate (test.type = factor(test.type, 
+                                      levels = c("w.pw", "phw.pw", "w.phw"))) %>% 
+    dplyr::mutate(population = factor(population, levels = c("testable", "students"))) %>% 
+    dplyr::group_by(population) %>% 
+    dplyr::group_modify(~ {
+        p <- ggplot(.x, aes(x = test.type, y = correct)) %>% 
+            violin_plot_template(yintercept = 50, dotsize = .5) +
+            scale_x_discrete("Test type",
+                             labels = c("Word vs. part-word", 
+                                        "Phantom-word vs .part-word", 
+                                        "Word vs. Phantom-Word") %>% 
+                                 str_wrap(width = 15)) +
+            theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
+            scale_y_continuous("% Correct") + 
+            facet_grid(sample.type ~ .,
+                       labeller = labeller (color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
+                                                str_to_sentence))
+        
+        # Return the plot as a one-row tibble
+        tibble(plot = list(p))
+    },
+    .keep = TRUE) %>% 
+    dplyr::ungroup() %>% 
+    tibble::deframe()
 ```
 
 
-```{r vsl-simultaneous-fa-plot-difference-scores, fig.cap="Relative difference scores for contrasts between different trial types (word vs. part-word trials vs. phantom-word vs. part-word trials, and word vs. part-word trials vs. word vs. phantom-word trials), after exclusion of participants whose performance was below 50\\% in the word vs. part-word trials. The dots, error bars and violion represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the difference scores for individual participants, respectively. Empty circles represent individual participants."}
 
-# Print only for runs where bad subjects are excluded
-if(REMOVE.BAD.SUBJ){
-    dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
+```{r vsl-simultaneous-fa-plot-difference-scores-prepare-by-polarity}
+
+p.vsl.simultaneous.fa.diff.scores.by.polarity <- dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
         dplyr::filter(str_detect(test.type, "relative")) %>% 
         dplyr::mutate(population = factor(population, levels = c("testable", "students"))) %>% 
         dplyr::mutate(test.type = dplyr::case_when(
             test.type == "d.relative.w.pw.ph.pw" ~ "$\\frac{W//PW - PhW//PW}{W//PW + PhW//PW}$",
             test.type == "d.relative.w.pw.w.phw" ~ "$\\frac{W//PW - W//PhW}{W//PW + W//PhW}$",
             TRUE ~ NA_character_)) %>% 
-        ggplot(aes(x = test.type, y = d)) %>% 
-        violin_plot_template(yintercept = 0) +
-        scale_x_discrete(labels = function(x) sapply(x, function(x) latex2exp::TeX(x))) +
-        theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
-        scale_y_continuous("Relative difference score") + 
-        facet_grid (population ~ color.type,
-                    labeller = labeller(color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
-                                            str_to_sentence)) -> p.vsl.simultaneous.fa.diff.scores
-    
-    
-    p.vsl.simultaneous.fa.diff.scores
-    
-    # ggsave(paste0 (FIG.DIR, "p.vsl.simultaneous.fa.diff.pdf"),
-    #        device = "pdf")
-}
-```
-
-
-As shown in Table \ref{tab:vsl-simultaneous-fa-descriptives} and Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy}, participants from the testable minds sample preferred both words and phantom-words to part-words. In contrast, the had no preference for words over phantom-words. Similar results were obtained for both color polarity types, with no discernible effect of color polarity type. The results for student sample were similar, except that there was no preference for phantom-words over part-words when black shapes were presented on a white background, and that the preference for phantom-words over part-words was significantly greater when white shapes were presented on a black background. However, given that the result relied on only 12 participants, I tentatively conclude that the current experiment replicate [@Endress-Phantoms] and [@Endress-Phantoms-Vision], in that phantom-words are preferred to part-words, and there is no marked preference for words over phantom-words. 
-
-To compare performance in the different trial types, I calculated the difference scores mentioned above. As shown in Table \ref{tab:vsl-simultaneous-fa-descriptives} and Figure \ref{fig:vsl-simultaneous-fa-plot-difference-scores}, participants from the testable sample performed much better on word vs. part-word trials than on word vs. phantom-word trials, irrespective of the color polarity type. This suggests that participants find discriminations based on TPs much easier than discriminations based on frequency of occurrence, which is problematic if statistical learning leads to memory for units. However, performance was also somewhat better for word vs. part-word trials than for phantom-word vs. part-word trials, suggesting that we cannot rule out that participants might also have some ability to track frequencies of occurrence. However, the corresponding difference score was much smaller than that comparing words vs. part-word and word vs. phantom-word trials, and ceased to be significant when all participants were included. 
-
-In the student sample, results were similar, except that I did not detect a performance difference between word vs. part-word and phantom-word vs. part-word trials when white shapes were presented on a black background. 
-
-
-```{r vsl-simultaneous-fa-plot-glmer-correct-calculate-and-print}
-
-# Print only for runs where bad subjects are excluded
-if(REMOVE.BAD.SUBJ){
-    dplyr::bind_rows(
-        # W vs. PW vs. W vs. PhW
-        dat.vsl.simultaneous.fa %>% 
-            #dplyr::filter(population == "testable") %>% 
-            dplyr::filter((test.type == "w.pw") | 
-                              (test.type == "w.phw")) %>% 
-            dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
-            dplyr::group_by(population, comparison.type) %>% 
-            dplyr::group_modify(~ glmer(correct ~ test.type + color.type + 
-                                            (1 | filename), 
-                                        control=glmerControl(optimizer="bobyqa"),
-                                        family="binomial",
-                                        data = .x) %>% 
-                                    extract.results.from.binary.model) %>% 
-            dplyr::ungroup(),
+    dplyr::group_by(population) %>% 
+    dplyr::group_modify(~ {
+        p <-ggplot(.x, aes(x = test.type, y = d)) %>% 
+            violin_plot_template(yintercept = 0) +
+            scale_x_discrete(labels = function(x) sapply(x, function(x) latex2exp::TeX(x))) +
+            theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
+            scale_y_continuous("Relative difference score") + 
+            facet_grid (sample.type ~ color.type,
+                        labeller = labeller(color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
+                                                str_to_sentence)) 
         
-        # W vs. PW vs. PhW vs. PW
-        dat.vsl.simultaneous.fa %>% 
-            #dplyr::filter(population == "testable") %>% 
-            dplyr::filter((test.type == "w.pw") | 
-                              (test.type == "phw.pw")) %>% 
-            dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
-            dplyr::group_by(population, comparison.type) %>% 
-            dplyr::group_modify(~ glmer(correct ~ test.type * color.type + 
-                                            (1 | filename), 
-                                        control=glmerControl(optimizer="bobyqa"),
-                                        family="binomial",
-                                        data = .x) %>% 
-                                    extract.results.from.binary.model)) %>% 
-        dplyr::select (-c("t_log", "p_log")) %>% 
-        #filter (p <= .1)  %>% 
-        dplyr::filter (!str_detect (term, "Intercept")) %>% 
-        dplyr::arrange(desc(population), desc(comparison.type)) %>% 
-        tidyr::unite(pack.col, population, comparison.type, sep = " - ") %>% 
-        kable.packed ("pack.col",
-                      caption = "Results of generalized linear mixed models for trial-by-trial responses, after exclusion of participants whose performance was below 50\\% in the word vs. part-word trials.",
-                      col.names = str_remove(names (.)[-1], "_.*$"), 
-                      booktabs = TRUE) %>% 
-        kableExtra::add_header_above(c(" " = 1, "Log-odds" = 3, "Odd ratios" = 3, " " = 2)) %>% 
-        kableExtra::kable_styling(latex_options =
-                                      c("scale_down",
-                                        "hold_position")) %>% 
-        #"striped")) %>% 
-        kable_classic_2()
-}
+                # Return the plot as a one-row tibble
+        tibble(plot = list(p))
+    },
+    .keep = TRUE) %>% 
+    dplyr::ungroup() %>% 
+    tibble::deframe()
+```
+
+```{r vsl-simultaneous-fa-plot-difference-scores-prepare-polarity-collapsed}
+
+p.vsl.simultaneous.fa.diff.scores.polarity.collapsed <- dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
+        dplyr::filter(str_detect(test.type, "relative")) %>% 
+        dplyr::mutate(population = factor(population, levels = c("testable", "students"))) %>% 
+        dplyr::mutate(test.type = dplyr::case_when(
+            test.type == "d.relative.w.pw.ph.pw" ~ "$\\frac{W//PW - PhW//PW}{W//PW + PhW//PW}$",
+            test.type == "d.relative.w.pw.w.phw" ~ "$\\frac{W//PW - W//PhW}{W//PW + W//PhW}$",
+            TRUE ~ NA_character_)) %>% 
+    dplyr::group_by(population) %>% 
+    dplyr::group_modify(~ {
+        p <-ggplot(.x, aes(x = test.type, y = d)) %>% 
+            violin_plot_template(yintercept = 0, dotsize = .5) +
+            scale_x_discrete(labels = function(x) sapply(x, function(x) latex2exp::TeX(x))) +
+            theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
+            scale_y_continuous("Relative difference score") + 
+            facet_grid (sample.type ~ .,
+                        labeller = labeller(color.type = ~ str_replace_all(.x, "\\.", " ") %>%
+                                                str_to_sentence)) 
+        
+                # Return the plot as a one-row tibble
+        tibble(plot = list(p))
+    },
+    .keep = TRUE) %>% 
+    dplyr::ungroup() %>% 
+    tibble::deframe()
+
+
 ```
 
 
-I confirmed these results using generalized linear mixed models with the fixed factor predictors trial type and and color polarity as well as their interaction, and a random intercept for participants. I fitted separate model for each sample (testable vs. students) and trial contrast (word vs. part-word trials vs. word vs. phantom-word trials and word vs. part-words and phantom-word vs. part-word trials). The models showed that performance on word vs. part-word trials is significantly better than for word vs. phantom-word trials. In the testable population, they also showed that performance on word vs. part-word trials was significantly better than on phantom-word vs. part-word trials, though this predictor was not significant in the student population. Further, the odds ratio associated with the former contrast was almost twice as high as that from the latter contrast.
 
-There were generally no main effects or interactions with polarity type, though students performed somewhat better for black on white displays.
+```{r vsl-simultaneous-fa-plot-accuracy-diff-scores-plot-polarity-collapsed-testable, fig.cap="(a) Accuracy in the different trial types (words vs. part-words, phantom-words vs. part-words, and words vs. phantom-words), (b)  Relative difference scores for contrasts between different trial types (word vs. part-word trials vs. phantom-word vs. part-word trials, and word vs. part-word trials vs. word vs. phantom-word trials). Both panels show the data for the full main sample (top) or after exclusion of participants whose performance did not exceed 50\\% in the word vs. part-word trials (bottom), collapsed across polarity contrasts (black shapes on a white background vs. white shapes on a black background). The dots, error bars and violin represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the average accuracy for individual participants, respectively. Empty circles represent individual participants.", fig.width=11, fig.height=11}
+
+
+ggpubr::ggarrange(
+    p.vsl.simultaneous.fa.accuracy.polarity.collapsed$testable + 
+        theme(
+            axis.title = element_text(size = 18),        # Axis labels
+            axis.text = element_text(size = 16),         # Axis annotations (tick labels)
+            strip.text = element_text(size = 20)         # Facet labels
+        ),
+    p.vsl.simultaneous.fa.diff.scores.polarity.collapsed$testable + 
+                theme(
+            axis.title = element_text(size = 18),        # Axis labels
+            axis.text = element_text(size = 16),         # Axis annotations (tick labels)
+            strip.text = element_text(size = 20)         # Facet labels
+        ),
+    nrow = 1, ncol = 2,
+    #common.legend = TRUE, legend="bottom", 
+    #legend.grob = plot.circle.combined.within.recency.legend,
+    label.y = .075,
+    labels = "auto")
+
+
+
+```
+
+
+As shown in Table \ref{tab:vsl-simultaneous-fa-descriptives-print-testable} and Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-diff-scores-plot-polarity-collapsed-testable}a, participants from the main sample preferred both words and phantom-words to part-words.^[The above chance performance in the restricted sample is meaningless, since only those participants were included who exceeded 50% on the word vs. part-word test.] In contrast, they had no preference for words over phantom-words. Similar results were obtained for both color polarity types, with no discernible effect of color polarity type. This results held in both the full sample and the restricted sample. (Individual results for the different polarity types are given in Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-plot-by-polarity-testable}.)
+
+To compare performance in the different trial types, I calculated the difference scores mentioned above. As shown in Table  \ref{tab:vsl-simultaneous-fa-descriptives-print-testable} and Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-diff-scores-plot-polarity-collapsed-testable}b, participants from the testable sample performed much better on word vs. part-word trials than on word vs. phantom-word trials, irrespective of the color polarity type. This suggests that participants find discriminations based on TPs much easier than discriminations based on frequency of occurrence, which is problematic if statistical learning leads to memory for units. (Individual results for the different polarity types are given in Figure \ref{fig:vsl-simultaneous-fa-plot-difference-scores-plot-testable}.)
+
+However, at least in the restricted sample, performance was also somewhat better for word vs. part-word trials than for phantom-word vs. part-word trials, suggesting that we cannot rule out that participants might also have some ability to track frequencies of occurrence. However, the corresponding difference score was much smaller than that comparing words vs. part-word and word vs. phantom-word trials, and was not significant in the full sample.
+
+As shown in Supplementary Online Material XXX, the results were similar for the student samnple, except that the data was noisier.
+
+
+
+```{r vsl-simultaneous-fa-plot-glmer-correct-calculate-old, eval = FALSE}
+
+l.vsl.simultaneous.fa.glmer <- dplyr::bind_rows(
+    # W vs. PW vs. W vs. PhW
+    dat.vsl.simultaneous.fa %>% 
+        #dplyr::filter(population == "testable") %>% 
+        dplyr::filter((test.type == "w.pw") | 
+                          (test.type == "w.phw")) %>% 
+        dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
+        dplyr::group_by(population, sample.type, comparison.type) %>% 
+        dplyr::group_modify(~ glmer(correct ~ test.type + color.type + 
+                                        (1 | filename), 
+                                    control=glmerControl(optimizer="bobyqa"),
+                                    family="binomial",
+                                    data = .x) %>% 
+                                extract.results.from.binary.model) %>% 
+        dplyr::ungroup(),
+    
+    # W vs. PW vs. PhW vs. PW
+    dat.vsl.simultaneous.fa %>% 
+        #dplyr::filter(population == "testable") %>% 
+        dplyr::filter((test.type == "w.pw") | 
+                          (test.type == "phw.pw")) %>% 
+        dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
+        dplyr::group_by(population, sample.type, comparison.type) %>% 
+        dplyr::group_modify(~ glmer(correct ~ test.type * color.type + 
+                                        (1 | filename), 
+                                    control=glmerControl(optimizer="bobyqa"),
+                                    family="binomial",
+                                    data = .x) %>% 
+                                extract.results.from.binary.model)) %>% 
+    dplyr::select (-c("t_log", "p_log")) %>% 
+    #filter (p <= .1)  %>% 
+    dplyr::filter (!str_detect (term, "Intercept")) %>% 
+    dplyr::arrange(desc(population), sample.type, desc(comparison.type)) %>% 
+    tidyr::unite(pack.col, sample.type, comparison.type, sep = " - ") %>% 
+    split(f = as.factor(.$population))
+```
+
+
+```{r vsl-simultaneous-fa-plot-glmer-correct-calculate}
+
+dat.vsl.simultaneous.fa.glmer <- dplyr::bind_rows(
+    # W vs. PW vs. W vs. PhW
+    dat.vsl.simultaneous.fa %>% 
+        #dplyr::filter(population == "testable") %>% 
+        dplyr::filter((test.type == "w.pw") | 
+                          (test.type == "w.phw")) %>% 
+        dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
+        dplyr::group_by(population, sample.type, comparison.type) %>% 
+        dplyr::group_modify(~  tibble( model = 
+                                           glmer(correct ~ test.type * color.type + 
+                                                     (1 | filename), 
+                                                 control=glmerControl(optimizer="bobyqa"),
+                                                 family="binomial",
+                                                 data = .x) %>% 
+                                           list)) %>% 
+        dplyr::ungroup(),
+    
+    # W vs. PW vs. PhW vs. PW
+    dat.vsl.simultaneous.fa %>% 
+        #dplyr::filter(population == "testable") %>% 
+        dplyr::filter((test.type == "w.pw") | 
+                          (test.type == "phw.pw")) %>% 
+        dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
+        dplyr::group_by(population, sample.type, comparison.type) %>% 
+        dplyr::group_modify(~ tibble(model = 
+                                         glmer(correct ~ test.type * color.type + 
+                                                   (1 | filename), 
+                                               control=glmerControl(optimizer="bobyqa"),
+                                               family="binomial",
+                                               data = .x) %>% 
+                                         list)) %>% 
+        dplyr::ungroup()) 
+
+
+
+
+```
+
+
+```{r vsl-simultaneous-fa-plot-glmer-correct-extract-results-and-add-power, include = FALSE, message = FALSE}
+
+
+
+
+
+l.vsl.simultaneous.fa.glmer <- dplyr::left_join(
+    dat.vsl.simultaneous.fa.glmer %>% 
+        dplyr::mutate(model.results = purrr::map(model, 
+                                                 extract.results.from.binary.model)) %>% 
+        tidyr::unnest(model.results) %>% 
+        dplyr::select(-model),
+    
+    dat.vsl.simultaneous.fa.glmer %>% 
+        dplyr::mutate(power.results = purrr::map(model, 
+                                                 ~ get.power.for.all.effects(
+                                                     model = .x, 
+                                                     nsim = 1000, 
+                                                     return.details = TRUE,
+                                                     exclude.intercept = FALSE)
+        )) %>% 
+        tidyr::unnest(power.results) %>% 
+        dplyr::select(-model),
+    
+    by = c("population", "sample.type", "comparison.type", "term")) %>% 
+    dplyr::select(-c(t_log, p_log)) %>% 
+    dplyr::rename(power = power.mean) %>% 
+#    dplyr::mutate(p.successfull.sims = power.successes/power.trials,
+#                  .after = "power") %>% 
+    dplyr::select(-dplyr::starts_with(fixed("power."))) %>%
+    #filter (p <= .1)  %>%
+    dplyr::filter (!str_detect (term, "Intercept")) %>%
+    dplyr::arrange(desc(population), sample.type, desc(comparison.type)) %>%
+    tidyr::unite(pack.col, sample.type, comparison.type, sep = " - ") %>%
+    split(f = as.factor(.$population))
+
+
+```
+
+
+
+
+
+```{r vsl-simultaneous-fa-plot-glmer-correct-print-testable}
+
+l.vsl.simultaneous.fa.glmer$testable %>% 
+    dplyr::select(-population) %>% 
+    kable.packed ("pack.col",
+                  caption = "Results of generalized linear mixed models for trial-by-trial responses, for the main sample. Results are reported for the full sample as well as the restricted sample, where participants were excluded if their performance did not exceed 50\\% on the word vs. part-word trials.",
+                  col.names = str_remove(names (.)[-1], "_.*$"), 
+                  booktabs = TRUE) %>% 
+    kableExtra::add_header_above(c(" " = 1, "Log-odds" = 3, "Odd ratios" = 3, " " = 3)) %>% 
+    kableExtra::kable_styling(latex_options =
+                                  c("scale_down",
+                                    "hold_position")) %>% 
+    #"striped")) %>% 
+    kable_classic_2()
+
+```
+
+I confirmed these results using the generalized linear mixed models mentioned above. As shown in Table \ref{tab:vsl-simultaneous-fa-plot-glmer-correct-print-testable}, the models showed that performance on word vs. part-word trials was significantly better than for word vs. phantom-word trials. They also showed that performance on word vs. part-word trials was significantly better than on phantom-word vs. part-word trials, though this predictor was significant only in the restricted sample and was only marginal in the full sample. Further, the odds ratio associated with the former contrast was almost twice as large as that from the latter contrast.
+
+There were no main effects or interactions with polarity type. The results for the student sample were generally similar. 
+
 
 
 # Discussion
 
 `r clearpage()`
-# Appendix 1: Results with the full sample
 
-```{r vsl-simultaneous-fa-demographics-full-sample}
+# Appendix 1: Results split by polarity type
 
-# Print only for runs where bad subjects are excluded
-if(!REMOVE.BAD.SUBJ){
-    bind_rows(
-        dat.vsl.simultaneous.fa %>% 
-            get.demographics2(subj = filename, gender = gender, age = age, population, color.type, subjectGroup) %>% 
-            dplyr::mutate(subjectGroup = as.character(subjectGroup)),
-        dat.vsl.simultaneous.fa %>% 
-            get.demographics2(subj = filename, gender = gender, age = age, population, color.type) %>% 
-            dplyr::mutate(subjectGroup = "TOTAL")
-    ) %>% 
-        dplyr::filter(subjectGroup == "TOTAL") %>% 
-        dplyr::select(-subjectGroup) %>% 
-        dplyr::mutate(color.type = str_replace_all(color.type, "\\.", " ")) %>% 
-        #dplyr::arrange(desc(population), color.type, subjectGroup) %>% 
-        dplyr::arrange(desc(population), color.type) %>% 
-        knitr::kable(
-            col.names = c("Population", "Color polarity", "N", "Females", "Males", "Other", "Age", "Age range"),
-            caption = "Demographics of the complete sample without any exclusions. For the student population, age and gender have not been recorded due to experimenter error.",
-            booktabs = TRUE) %>% 
-        kableExtra::kable_classic_2()
-}
-```
+```{r vsl-simultaneous-fa-plot-accuracy-plot-by-polarity-testable, fig.cap="Accuracy in the different trial types (words vs. part-words, phantom-words vs. part-words, and words vs. phantom-words), for the full main sample (top) or after exclusion of participants whose performance did not exceed 50\\% in the word vs. part-word trials (bottom), for black shapes on a white background (left) and white shapes on a black background (right). The dots, error bars and violin represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the average accuracy for individual participants, respectively. Empty circles represent individual participants."}
 
+p.vsl.simultaneous.fa.accuracy.by.polarity$testable
 
-```{r vsl-simultaneous-fa-descriptives-full-sample}
-
-# Print only for runs where bad subjects are excluded
-if(!REMOVE.BAD.SUBJ){
-    bind_rows (
-        # Accuracy - descriptives 
-        dat.vsl.simultaneous.fa.m %>% 
-            group_by(population, color.type, test.type) %>% 
-            summarize(N = n(),
-                      M = mean (correct), 
-                      SE = se (correct),
-                      p.wilcox = wilcox.p(correct, 50)),
-        
-        # Accuracy - effect of color.type
-        dat.vsl.simultaneous.fa.m %>% 
-            dplyr::group_by(population, test.type) %>% 
-            rstatix::wilcox_test(correct ~ color.type, paired = FALSE) %>% 
-            dplyr::select(population, test.type, p) %>% 
-            dplyr::rename(p.wilcox = p) %>% 
-            dplyr::mutate(color.type = "zEffect of color polarity"),
-        
-        # Difference scores - descriptives
-        dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
-            dplyr::select (population, filename, color.type, test.type, d) %>% 
-            group_by(population, color.type, test.type) %>% 
-            summarize(N = n(),
-                      M = mean (d), 
-                      SE = se (d),
-                      p.wilcox = wilcox.p(d, 0)),
-        
-        # Difference scores - effect of color type
-        dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
-            dplyr::group_by(population, test.type) %>% 
-            rstatix::wilcox_test(d ~ color.type, paired = FALSE) %>% 
-            dplyr::select(population, test.type, p) %>% 
-            dplyr::rename(p.wilcox = p) %>% 
-            dplyr::mutate(color.type = "zEffect of color polarity")) %>% 
-        dplyr::arrange(desc(population), color.type, desc(test.type)) %>% 
-        tidyr::unite(population.color.type, population, color.type, sep = " - ") %>% 
-        dplyr::mutate(population.color.type.n = ifelse(is.na(N), 
-                                                       population.color.type,
-                                                       str_c(population.color.type, " (N = ", N, ")")), .keep = "unused") %>% 
-        kable.packed("population.color.type.n",
-                     caption = "Descriptives of accuracy scores and difference scores for the full sample without any exclusions. The p value reflects a Wilcoxon test against the chance levels of 50 percent and of 0 for accuracies and difference scores, respectively. The effect of color polarity represents a Wilcoxon test comparing all of these dependent variables as a function of color polarity",
-                     #col.names = c("", "*M*", "*SE*", "*p.wilcoxon*"),
-                     booktabs = TRUE) %>%
-        kableExtra::kable_classic_2()
-}
 ```
 
 
 
 
-
-```{r vsl-simultaneous-fa-plot-accuracy-full-sample, fig.cap="Accuracy in the different trial types (words vs. part-words, phantom-words vs. part-words, and words vs. phantom-words), for the full sample without any exclusions. The dots, error bars and violion represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the average accuracy for individual participants, respectively. Empty circles represent individual participants."}
-
-# Print only for runs where bad subjects are excluded
-if(!REMOVE.BAD.SUBJ){
-    dat.vsl.simultaneous.fa.m %>% 
-        mutate (test.type = factor(test.type, 
-                                   levels = c("w.pw", "phw.pw", "w.phw"))) %>% 
-        dplyr::mutate(population = factor(population, levels = c("testable", "students"))) %>% 
-        ggplot(aes(x = test.type, y = correct)) %>% 
-        violin_plot_template(yintercept = 50) +
-        scale_x_discrete("Test type",
-                         labels = c("Word vs. part-word", 
-                                    "Phantom-word vs .part-word", 
-                                    "Word vs. Phantom-Word") %>% 
-                             str_wrap(width = 15)) +
-        theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
-        scale_y_continuous("% Correct") + 
-        facet_grid(population ~ color.type,
-                   labeller = labeller (color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
-                                            str_to_sentence)) -> p.vsl.simultaneous.fa.accuracy
+```{r vsl-simultaneous-fa-plot-difference-scores-plot-testable, fig.cap="Relative difference scores for contrasts between different trial types (word vs. part-word trials vs. phantom-word vs. part-word trials, and word vs. part-word trials vs. word vs. phantom-word trials), for the full main sample or after exclusion of participants whose performance did not exceed 50\\% in the word vs. part-word trials. The dots, error bars and violin represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the difference scores for individual participants, respectively. Empty circles represent individual participants."}
     
+p.vsl.simultaneous.fa.diff.scores.by.polarity$testable
     
-    p.vsl.simultaneous.fa.accuracy
-    
-    # ggsave(paste0 (FIG.DIR, "p.vsl.simultaneous.fa.acc.pdf"),
-    #        device = "pdf")
-}
 ```
 
 
-```{r vsl-simultaneous-fa-plot-difference-scores-full-sample, fig.cap="Relative difference scores for contrasts between different trial types (word vs. part-word trials vs. phantom-word vs. part-word trials, and word vs. part-word trials vs. word vs. phantom-word trials), for the full sample without any exclusions. The dots, error bars and violion represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the difference scores for individual participants, respectively. Empty circles represent individual participants."}
 
-# Print only for runs where bad subjects are excluded
-if(!REMOVE.BAD.SUBJ){
-    dat.vsl.simultaneous.fa.m.wide.single.d.col %>% 
-        dplyr::filter(str_detect(test.type, "relative")) %>% 
-        dplyr::mutate(population = factor(population, levels = c("testable", "students"))) %>% 
-        dplyr::mutate(test.type = dplyr::case_when(
-            test.type == "d.relative.w.pw.ph.pw" ~ "$\\frac{W//PW - PhW//PW}{W//PW + PhW//PW}$",
-            test.type == "d.relative.w.pw.w.phw" ~ "$\\frac{W//PW - W//PhW}{W//PW + W//PhW}$",
-            TRUE ~ NA_character_)) %>% 
-        ggplot(aes(x = test.type, y = d)) %>% 
-        violin_plot_template(yintercept = 0) +
-        scale_x_discrete(labels = function(x) sapply(x, function(x) latex2exp::TeX(x))) +
-        theme(axis.text.x = element_text(angle=45, vjust=.5, hjust=.5)) +
-        scale_y_continuous("Relative difference score") + 
-        facet_grid (population ~ color.type,
-                    labeller = labeller(color.type = ~ str_replace_all(.x, "\\.", " ") %>% 
-                                            str_to_sentence)) -> p.vsl.simultaneous.fa.diff.scores
-    
-    
-    p.vsl.simultaneous.fa.diff.scores
-    
-    # ggsave(paste0 (FIG.DIR, "p.vsl.simultaneous.fa.diff.pdf"),
-    #        device = "pdf")
-}
+`r clearpage()`
+
+# Appendix 2: Results with the student sample
+
+```{r vsl-simultaneous-fa-descriptives-print-city}    
+l.vsl.simultaneous.fa.descriptives$students %>% 
+    dplyr::select(-population) %>% 
+    kable.packed("sample.type.color.type.n",
+                 caption = "Descriptives of accuracy scores and difference scores for the student sample. The restricted sample consists of participants whose performance exceeded 50\\% on word vs. part-word trials. The p value reflects a Wilcoxon test against the chance levels of 50 percent and of zero for accuracies and difference scores, respectively. The effect of color polarity represents a Wilcoxon test comparing all of these dependent variables as a function of color polarity. The p value was corrected for repeated testing using the Holm-Bonferroni method, separately for each (full or restricted) sample (pHB). In the restricted sample, comparisons of the word vs. part-word contrast against chance are not meaningful as participants were selected based on their performance in this comparison.",
+                 #col.names = c("", "*M*", "*SE*", "*p.wilcoxon*"),
+                 booktabs = TRUE) %>%
+    kableExtra::kable_classic_2()
+
+
+
+```
+
+```{r vsl-simultaneous-fa-plot-accuracy-diff-scores-plot-polarity-collapsed-city, fig.cap="(a) Accuracy in the different trial types (words vs. part-words, phantom-words vs. part-words, and words vs. phantom-words), (b)  Relative difference scores for contrasts between different trial types (word vs. part-word trials vs. phantom-word vs. part-word trials, and word vs. part-word trials vs. word vs. phantom-word trials). Both panels show the data for the full student sample (top) or after exclusion of participants whose performance did not exceed 50\\% in the word vs. part-word trials (bottom), collapsed across polarity contrasts (black shapes on a white background vs. white shapes on a black background). The dots, error bars and violin represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the average accuracy for individual participants, respectively. Empty circles represent individual participants.", fig.width=11, fig.height=11}
+
+
+ggpubr::ggarrange(
+    p.vsl.simultaneous.fa.accuracy.polarity.collapsed$students + 
+                theme(
+            axis.title = element_text(size = 18),        # Axis labels
+            axis.text = element_text(size = 16),         # Axis annotations (tick labels)
+            strip.text = element_text(size = 20)         # Facet labels
+        ),
+    p.vsl.simultaneous.fa.diff.scores.polarity.collapsed$students + 
+                theme(
+            axis.title = element_text(size = 18),        # Axis labels
+            axis.text = element_text(size = 16),         # Axis annotations (tick labels)
+            strip.text = element_text(size = 20)         # Facet labels
+        ),
+    nrow = 1, ncol = 2,
+    #common.legend = TRUE, legend="bottom", 
+    #legend.grob = plot.circle.combined.within.recency.legend,
+    label.y = .075,
+    labels = "auto")
+
+
+
 ```
 
 
-As shown in Table \ref{tab:vsl-simultaneous-fa-descriptives-full-sample} and Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-full-sample}, participants from the testable minds sample preferred both words and phantom-words to part-words. In contrast, the had no preference for words over phantom-words. Similar results were obtained for both color polarity types, with no discernible effect of color polarity type. In the complete student sample, in contrast, the only significant preference was that for words over part-words, but only when black shapes were presented on a white background. These contrasting results presumably reflect the finding that, in other experiments that can implement attention check manipulations, 30% to 50% of such samples need to be excluded due to insufficient attention. 
 
-As a result, I tentatively conclude that, at least in the testable minds sample, the current experiment replicate [@Endress-Phantoms] and [@Endress-Phantoms-Vision], in that phantom-words are preferred to part-words, and there is no marked preference for words over phantom-words. 
 
-To compare performance across trial types, I calculated the difference scores mentioned above. As shown in Table \ref{tab:vsl-simultaneous-fa-descriptives-full-sample} and Figure \ref{fig:vsl-simultaneous-fa-plot-difference-scores-full-sample}, participants from the testable sample performed much better on word vs. part-word trials than on word vs. phantom-word trials, irrespective of the color polarity type. This suggests that participants find discriminations based on TPs much easier than discriminations based on frequency of occurrence, which is problematic if statistical learning leads to memory for units. In contrast to the results with the restricted sample, performance was not significantly different between word vs. part-word trials and phantom-word vs. part-word trials.
+```{r vsl-simultaneous-fa-plot-accuracy-plot-by-polarity-city, fig.cap="Accuracy in the different trial types (words vs. part-words, phantom-words vs. part-words, and words vs. phantom-words), for the full student sample (top) or after exclusion of participants whose performance did not exceed 50\\% in the word vs. part-word trials (bottom), for black shapes on a white background (left) and white shapes on a black background (right). The dots, error bars and violin represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the average accuracy for individual participants, respectively. Empty circles represent individual participants."}
 
-In the student sample, only the comparison between word vs. part-word trials and word vs. phantom-word trials was statistically different from zero, but only when black shapes were presented on a white background. However, and as mentioned above, this sample likely contained a sizable proportion of participants who paid little attention to the stimuli.
+p.vsl.simultaneous.fa.accuracy.by.polarity$students
 
-```{r vsl-simultaneous-fa-plot-glmer-correct-calculate-and-print-full-sample}
 
-# Print only for runs where bad subjects are excluded
-if(!REMOVE.BAD.SUBJ){
-    dplyr::bind_rows(
-        # W vs. PW vs. W vs. PhW
-        dat.vsl.simultaneous.fa %>% 
-            #dplyr::filter(population == "testable") %>% 
-            dplyr::filter((test.type == "w.pw") | 
-                              (test.type == "w.phw")) %>% 
-            dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
-            dplyr::group_by(population, comparison.type) %>% 
-            dplyr::group_modify(~ glmer(correct ~ test.type + color.type + 
-                                            (1 | filename), 
-                                        control=glmerControl(optimizer="bobyqa"),
-                                        family="binomial",
-                                        data = .x) %>% 
-                                    extract.results.from.binary.model) %>% 
-            dplyr::ungroup(),
-        
-        # W vs. PW vs. PhW vs. PW
-        dat.vsl.simultaneous.fa %>% 
-            #dplyr::filter(population == "testable") %>% 
-            dplyr::filter((test.type == "w.pw") | 
-                              (test.type == "phw.pw")) %>% 
-            dplyr::mutate(comparison.type = paste0(unique(test.type), collapse = " vs. ")) %>% 
-            dplyr::group_by(population, comparison.type) %>% 
-            dplyr::group_modify(~ glmer(correct ~ test.type * color.type + 
-                                            (1 | filename), 
-                                        control=glmerControl(optimizer="bobyqa"),
-                                        family="binomial",
-                                        data = .x) %>% 
-                                    extract.results.from.binary.model)) %>% 
-        dplyr::select (-c("t_log", "p_log")) %>% 
-        #filter (p <= .1)  %>% 
-        dplyr::filter (!str_detect (term, "Intercept")) %>% 
-        dplyr::arrange(desc(population), desc(comparison.type)) %>% 
-        tidyr::unite(pack.col, population, comparison.type, sep = " - ") %>% 
-        kable.packed ("pack.col",
-                      caption = "Results of generalized linear mixed models for trial-by-trial responses, for the full sample without any exclusions.",
-                      col.names = str_remove(names (.)[-1], "_.*$"), 
-                      booktabs = TRUE) %>% 
-        kableExtra::add_header_above(c(" " = 1, "Log-odds" = 3, "Odd ratios" = 3, " " = 2)) %>% 
-        kableExtra::kable_styling(latex_options =
-                                      c("scale_down",
-                                        "hold_position")) %>% 
-        #"striped")) %>% 
-        kable_classic_2()
-}
+```
+
+```{r vsl-simultaneous-fa-plot-difference-scores-plot-by-polarity-city, fig.cap="Relative difference scores for contrasts between different trial types (word vs. part-word trials vs. phantom-word vs. part-word trials, and word vs. part-word trials vs. word vs. phantom-word trials), for the full student sample or after exclusion of participants whose performance did not exceed 50\\% in the word vs. part-word trials. The dots, error bars and violin represent the sample averages, 95\\% bootstrap confidence intervals and the distribution of the difference scores for individual participants, respectively. Empty circles represent individual participants."}
+    
+p.vsl.simultaneous.fa.diff.scores.by.polarity$students
+    
 ```
 
 
-I confirmed these results using generalized linear mixed models with the fixed factor predictors trial type and and color polarity as well as their interaction, and a random intercept for participants. I fitted separate model for each sample (testable vs. students) and trial contrast (word vs. part-word trials vs. word vs. phantom-word trials and word vs. part-words and phantom-word vs. part-word trials). As shown in Table \ref{tab:vsl-simultaneous-fa-plot-glmer-correct-calculate-and-print-full-sample}, the models showed that performance on word vs. part-word trials is significantly better than for word vs. phantom-word trials. In contrast, there was no difference between word vs part-word and phantom-word vs. part-word trials.
+The results for the student sample depended somewhat on whether the full sample or the restricted sample were analyzed, and on whether a correction for repeated testing was applied. This is presumably due to a combination of the limited sample size, and the usually high proportion of participants paying no attention to the stimuli.  
 
-There were generally no main effects or interactions with polarity type.
+The results for raw accuracy scores are given in Table \ref{tab:vsl-simultaneous-fa-descriptives-print-city} and Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-diff-scores-plot-polarity-collapsed-city}a. (Individual results for the different polarity types are given in Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-plot-by-polarity-city}.)
 
+While participants in the restricted sample preferred words over part-words (unsurprisingly, given that only those participants were included who exceeded 50% on the word vs. part-word test), this preference was only significant in the full sample when the Holm-Bonferroni correction was not applied. In the restricted sample, participants also preferred phantom-words to part-words, though this preference survived the Holm-Bonferroni correction only when white shapes were presented on a black background. In the full sample, this preference was not significant. They had no preference for words over phantom-words. There was no discernible effect of color polarity type. 
+
+To compare performance in the different trial types, I calculated the difference scores mentioned above. As shown in Table  \ref{tab:vsl-simultaneous-fa-descriptives-print-city} and Figure \ref{fig:vsl-simultaneous-fa-plot-accuracy-diff-scores-plot-polarity-collapsed-city}b, participants from the student sample performed much better on word vs. part-word trials than on word vs. phantom-word trials. While this effect was generally significant before applying the Holm-Bonferroni correction, it did not survive this correction for all polarity types. Be that as it may, these results suggest that participants find discriminations based on TPs much easier than discriminations based on frequency of occurrence, which is problematic if statistical learning leads to memory for units. (Individual results for the different polarity types are given in \ref{fig:vsl-simultaneous-fa-plot-difference-scores-plot-city}.)
+
+However, at least in the restricted sample, performance was also somewhat better for word vs. part-word trials than for phantom-word vs. part-word trials, suggesting that we cannot rule out that participants might also have some ability to track frequencies of occurrence. However, the corresponding difference score was much smaller than that comparing words vs. part-word and word vs. phantom-word trials, and was not significant in the full sample.
+
+
+```{r vsl-simultaneous-fa-plot-glmer-correct-print-city}
+l.vsl.simultaneous.fa.glmer$student %>% 
+    dplyr::select(-population) %>% 
+    kable.packed ("pack.col",
+                  caption = "Results of generalized linear mixed models for trial-by-trial responses, for the student sample. Results are reported for the full sample as well as the restricted sample, where participants were excluded if their performance did not exceed 50\\% on the word vs. part-word trials.",
+                  col.names = str_remove(names (.)[-1], "_.*$"), 
+                  booktabs = TRUE) %>% 
+    kableExtra::add_header_above(c(" " = 1, "Log-odds" = 3, "Odd ratios" = 3, " " = 3)) %>% 
+    kableExtra::kable_styling(latex_options =
+                                  c("scale_down",
+                                    "hold_position")) %>% 
+    #"striped")) %>% 
+    kable_classic_2()
+
+```
+
+I confirmed these results using the generalized linear mixed models above. As shown in Table \ref{tab:vsl-simultaneous-fa-plot-glmer-correct-print-city}, the models showed that performance on word vs. part-word trials was significantly better than for word vs. phantom-word trials. They also showed that performance on word vs. part-word trials was significantly better than on phantom-word vs. part-word trials, though this predictor was significant only in the restricted sample but not for the full sample. In the model comparing word vs. phantom-word trials and word vs. part-words and phantom-word vs. part-word trials, performance was somewhat better when white shapes were presented on a black background. There were no other main effects or interactions with polarity type. 
